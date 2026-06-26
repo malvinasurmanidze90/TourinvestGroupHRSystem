@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TourInvest · HR Portal — გამოსაცდელი ვადის სისტემა</title>
+<style>
+:root {
+  --navy:#1e2d4a;--navy-mid:#2d4a6b;--steel:#3a6b9a;
+  --teal:#4fa8c8;--teal-light:#e8f4f8;
+  --gold:#c9a84c;--gold-light:#fdf8ec;
+  --green:#2e7d52;--green-light:#e8f5ee;
+  --amber:#b8650a;--amber-light:#fff4e6;
+  --red:#c0392b;--red-light:#fdf0ee;
+  --gray-100:#f4f6f8;--gray-200:#e8ecf0;--gray-300:#d0d7de;
+  --gray-500:#7a8a9a;--gray-700:#4a5568;
+  --text:#1a2332;--text-muted:#5a6a7a;
+  --white:#ffffff;--border:#c8d4de;
+  --sidebar-w:280px;--shadow:0 2px 8px rgba(30,45,74,.10);
+  --shadow-lg:0 6px 24px rgba(30,45,74,.14);--radius:6px;--radius-lg:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Segoe UI","Arial",sans-serif;font-size:13.5px;color:var(--text);background:#dce4ed;line-height:1.5;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a2640 0%,#1e2d4a 50%,#2a3f6a 100%);}
+.login-card{background:var(--white);border-radius:var(--radius-lg);padding:40px 44px;width:400px;box-shadow:var(--shadow-lg);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .brand{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:1px;}
+.login-logo .brand span{color:var(--teal);}
+.login-logo .sub{font-size:11.5px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+.login-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
+.login-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:13.5px;color:var(--text);transition:border-color .2s;margin-bottom:14px;}
+.login-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,168,200,.15);}
+.login-btn{width:100%;background:var(--navy);color:var(--white);border:none;border-radius:var(--radius);padding:11px;font-size:14px;font-weight:600;letter-spacing:.3px;transition:background .2s;margin-top:4px;}
+.login-btn:hover{background:var(--navy-mid);}
+.login-error{background:var(--red-light);border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:9px 12px;font-size:12.5px;margin-bottom:12px;display:none;}
+.login-demos{margin-top:22px;border-top:1px solid var(--border);padding-top:16px;}
+.login-demos-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.demo-btn{display:block;width:100%;text-align:left;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:var(--radius);padding:7px 12px;font-size:12px;color:var(--navy-mid);margin-bottom:5px;transition:background .15s;}
+.demo-btn:hover{background:var(--teal-light);}
+.demo-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+.badge-hr-tag{background:#dbeafe;color:#1d4ed8;}
+.badge-mgr-tag{background:#dcfce7;color:#15803d;}
+.badge-dir-tag{background:#fef3c7;color:#92400e;}
+.badge-emp-tag{background:#f3e8ff;color:#7e22ce;}
+.badge-local-tag{background:#e0f2fe;color:#0369a1;}
+#portal{display:none;min-height:100vh;}
+.portal-layout{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.sidebar-header{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-brand{font-size:15px;font-weight:700;color:var(--white);letter-spacing:.5px;}
+.sidebar-brand span{color:var(--teal);}
+.sidebar-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;}
+.sidebar-user{padding:12px 16px;background:rgba(255,255,255,.05);margin:10px 10px 4px;border-radius:var(--radius);font-size:12px;}
+.sidebar-user-name{color:var(--white);font-weight:600;}
+.sidebar-user-role{color:rgba(255,255,255,.5);font-size:11px;margin-top:1px;}
+.sidebar-nav{flex:1;padding:8px 0;}
+.nav-section{margin-bottom:4px;}
+.nav-section-label{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1.2px;text-transform:uppercase;padding:10px 18px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;color:rgba(255,255,255,.65);font-size:13px;cursor:pointer;transition:background .15s,color .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:var(--white);}
+.nav-item.active{background:rgba(79,168,200,.15);color:var(--teal);border-left-color:var(--teal);}
+.nav-item .icon{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:var(--white);border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;min-width:18px;text-align:center;}
+.sidebar-logout{padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto;}
+.logout-btn{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.5);font-size:12.5px;cursor:pointer;transition:color .15s;}
+.logout-btn:hover{color:var(--white);}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--white);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:var(--shadow);}
+.topbar-title{font-size:15px;font-weight:700;color:var(--navy);}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.notif-btn{position:relative;background:none;border:1.5px solid var(--border);border-radius:var(--radius);width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gray-700);transition:border-color .2s;}
+.notif-btn:hover{border-color:var(--teal);}
+.notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--white);}
+.content{padding:24px;overflow-y:auto;}
+.view{display:none;}.view.active{display:block;}
+.view-header{margin-bottom:20px;}
+.view-title{font-size:18px;font-weight:700;color:var(--navy);}
+.view-subtitle{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
+.card{background:var(--white);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);}
+.card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{background:var(--white);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--teal);}
+.kpi-card.kpi-green{border-left-color:var(--green);}.kpi-card.kpi-amber{border-left-color:var(--amber);}.kpi-card.kpi-red{border-left-color:var(--red);}
+.kpi-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-value{font-size:28px;font-weight:700;color:var(--navy);}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.tbl-wrap{overflow-x:auto;}
+table.data-table{width:100%;border-collapse:collapse;}
+table.data-table th{background:var(--navy);color:var(--white);padding:9px 12px;font-size:11.5px;font-weight:700;text-align:left;letter-spacing:.3px;}
+table.data-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--gray-200);vertical-align:middle;}
+table.data-table tr:hover td{background:var(--gray-100);}
+table.data-table tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:.2px;}
+.badge-active{background:#dbeafe;color:#1d4ed8;}.badge-monitoring{background:var(--amber-light);color:var(--amber);}
+.badge-passed{background:var(--green-light);color:var(--green);}.badge-terminated{background:var(--red-light);color:var(--red);}
+.badge-pending{background:var(--gray-200);color:var(--gray-700);}.badge-done{background:var(--green-light);color:var(--green);}
+.form-status-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.form-chip{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;padding:2px 7px;border-radius:3px;font-weight:600;}
+.form-chip.done{background:var(--green-light);color:var(--green);}.form-chip.pending{background:var(--gray-200);color:var(--gray-500);}
+.form-chip.overdue{background:var(--red-light);color:var(--red);}.form-chip.upcoming{background:var(--amber-light);color:var(--amber);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;border:none;transition:all .15s;cursor:pointer;}
+.btn-primary{background:var(--navy);color:var(--white);}.btn-primary:hover{background:var(--navy-mid);}
+.btn-teal{background:var(--teal);color:var(--white);}.btn-teal:hover{background:#3d96b8;}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--border);}.btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+.btn-danger{background:var(--red);color:var(--white);}.btn-green{background:var(--green);color:var(--white);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.search-input{border:1.5px solid var(--border);border-radius:var(--radius);padding:7px 12px;font-size:13px;width:240px;color:var(--text);}
+.search-input:focus{outline:none;border-color:var(--teal);}
+.filter-select{border:1.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);background:var(--white);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:var(--radius-lg);width:760px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);}
+.modal-lg{width:900px;}.modal-sm{width:480px;}
+.modal-header{background:var(--navy);color:var(--white);padding:18px 24px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-header h2{font-size:16px;font-weight:600;}.modal-header .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:2px;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;line-height:1;}.modal-close:hover{color:var(--white);}
+.modal-body{padding:24px;overflow-y:auto;flex:1;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-shrink:0;}
+.field-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field-label{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;}
+.req{color:var(--red);}
+.field-input{border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;color:var(--text);width:100%;transition:border-color .2s;}
+.field-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,168,200,.12);}
+select.field-input{cursor:pointer;}textarea.field-input{resize:vertical;min-height:70px;}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.form-section{margin-bottom:20px;}
+.form-section-title{background:var(--navy);color:var(--white);padding:8px 14px;border-radius:var(--radius) var(--radius) 0 0;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.form-section-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px;}
+.notice{background:var(--teal-light);border-left:4px solid var(--teal);border-radius:var(--radius);padding:12px 14px;font-size:12.5px;color:var(--navy-mid);margin-bottom:14px;}
+.notice.warn{background:var(--amber-light);border-left-color:var(--amber);color:#7c4a00;}
+.notice.danger{background:var(--red-light);border-left-color:var(--red);color:#8b1a1a;}
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--gray-200);}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type=checkbox]{margin-top:2px;width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+.checklist-item label{font-size:13px;color:var(--text);line-height:1.45;cursor:pointer;}
+.eval-block{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.eval-block-header{background:var(--gray-100);padding:10px 14px;display:flex;align-items:flex-start;gap:10px;}
+.eval-block-num{background:var(--navy);color:var(--white);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.eval-block-info{flex:1;}
+.eval-block-title{font-size:13px;font-weight:700;color:var(--navy);}
+.eval-block-desc{font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.45;}
+.eval-block-body{padding:12px 14px;background:var(--white);}
+.rating-row{display:flex;gap:6px;margin-bottom:6px;}
+.rating-btn{flex:1;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 4px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;background:var(--white);color:var(--gray-700);}
+.rating-btn:hover{border-color:var(--teal);background:var(--teal-light);}
+.rating-btn.sel-1{background:#c0392b;border-color:#c0392b;color:#fff;}
+.rating-btn.sel-2{background:#e67e22;border-color:#e67e22;color:#fff;}
+.rating-btn.sel-3{background:#f39c12;border-color:#f39c12;color:#fff;}
+.rating-btn.sel-4{background:#27ae60;border-color:#27ae60;color:#fff;}
+.rating-btn.sel-5{background:#1a6e3a;border-color:#1a6e3a;color:#fff;}
+.rating-labels{display:flex;gap:6px;margin-bottom:4px;}
+.rating-label{flex:1;text-align:center;font-size:10px;color:var(--text-muted);}
+.comment-field{border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;font-size:12.5px;width:100%;resize:vertical;min-height:56px;font-family:inherit;color:var(--text);}
+.comment-field:focus{outline:none;border-color:var(--teal);}
+.score-display{background:var(--navy);color:var(--white);border-radius:var(--radius-lg);padding:20px;text-align:center;margin-bottom:16px;}
+.score-big{font-size:48px;font-weight:700;color:var(--teal);}
+.result-verdict{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:var(--radius);font-size:13px;font-weight:700;margin-top:10px;}
+.verdict-pass{background:var(--green);color:var(--white);}
+.verdict-monitor{background:var(--amber);color:var(--white);}
+.verdict-fail{background:var(--red);color:var(--white);}
+.timeline{position:relative;padding-left:28px;}
+.timeline::before{content:"";position:absolute;left:9px;top:0;bottom:0;width:2px;background:var(--gray-200);}
+.tl-item{position:relative;margin-bottom:14px;}
+.tl-dot{position:absolute;left:-28px;top:4px;width:18px;height:18px;border-radius:50%;border:2px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--white);}
+.tl-dot.done{background:var(--green);}.tl-dot.active{background:var(--teal);}
+.tl-dot.pending{background:var(--gray-300);}.tl-dot.overdue{background:var(--red);}
+.tl-content{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.tl-title{font-size:13px;font-weight:700;color:var(--navy);}
+.tl-meta{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
+.tl-actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+.prog-bar-wrap{background:var(--gray-200);border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px;}
+.prog-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+.pos-table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.pos-table th{background:var(--navy);color:var(--white);padding:8px 10px;font-size:11.5px;font-weight:700;text-align:left;}
+.pos-table th:not(:first-child){text-align:center;}
+.pos-table td{padding:8px 10px;border-bottom:1px solid var(--gray-200);font-size:12.5px;vertical-align:middle;}
+.pos-table td:not(:first-child){text-align:center;font-weight:600;color:var(--teal);}
+.pos-table tr{cursor:pointer;}.pos-table tr:hover td{background:var(--teal-light);}
+.pos-table tr.selected td{background:rgba(79,168,200,.1);}
+.pos-table tr.selected td:first-child{border-left:3px solid var(--teal);}
+.notif-item{display:flex;gap:12px;padding:14px;border-bottom:1px solid var(--gray-200);transition:background .15s;cursor:pointer;}
+.notif-item:hover{background:var(--gray-100);}.notif-item.unread{background:var(--teal-light);}
+.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ni-warn{background:var(--amber-light);}.ni-info{background:var(--teal-light);}
+.ni-danger{background:var(--red-light);}.ni-success{background:var(--green-light);}
+.notif-body{flex:1;}
+.notif-title{font-size:13px;font-weight:600;color:var(--text);}
+.notif-desc{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45;}
+.notif-time{font-size:11px;color:var(--gray-500);margin-top:5px;}
+.emp-header{background:var(--white);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;align-items:flex-start;gap:16px;}
+.emp-avatar{width:56px;height:56px;background:var(--navy);color:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;}
+.emp-info{flex:1;}
+.emp-name{font-size:18px;font-weight:700;color:var(--navy);}
+.emp-position{font-size:13.5px;color:var(--text-muted);margin-top:2px;}
+.emp-meta{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;}
+.emp-meta-item{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px;}
+.emp-meta-label{font-weight:600;color:var(--gray-700);}
+.score-blocks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.score-block-card{background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center;border-top:3px solid var(--teal);}
+.score-block-card.block-b{border-top-color:var(--navy-mid);}.score-block-card.block-g{border-top-color:var(--gold);}
+.sbc-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.sbc-score{font-size:26px;font-weight:700;color:var(--navy);}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-muted);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;}
+.empty-state .msg{font-size:14px;font-weight:600;color:var(--gray-700);}
+.tab-bar{display:flex;border-bottom:2px solid var(--gray-200);margin-bottom:18px;}
+.tab-btn{padding:9px 18px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;}
+.tab-btn:hover{color:var(--navy);}.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.chart-bar-group{margin-bottom:10px;}
+.chart-bar-label{font-size:12px;color:var(--text-muted);margin-bottom:4px;display:flex;justify-content:space-between;}
+.chart-bar-wrap{background:var(--gray-200);border-radius:4px;height:10px;overflow:hidden;}
+.chart-bar-fill{height:100%;border-radius:4px;}
+.critical-flag{display:inline-flex;align-items:center;gap:6px;background:var(--red-light);border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:6px 12px;font-size:12.5px;font-weight:700;}
+.days-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;}
+.days-ok{background:var(--green-light);color:var(--green);}
+.days-warn{background:var(--amber-light);color:var(--amber);}
+.days-over{background:var(--red-light);color:var(--red);}
+.days-done{background:var(--gray-200);color:var(--gray-500);}
+.fill-teal{background:var(--teal);}.fill-green{background:var(--green);}
+.fill-amber{background:var(--amber);}.fill-red{background:var(--red);}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand">TourInvest<span> Group</span></div>
+      <div class="sub">HR Portal · გამოსაცდელი ვადა</div>
+    </div>
+    <div id="login-error" class="login-error">მომხმარებელი ან პაროლი არასწორია.</div>
+    <label class="login-label">მომხმარებელი</label>
+    <input type="text" id="l-user" class="login-input" placeholder="username">
+    <label class="login-label">პაროლი</label>
+    <input type="password" id="l-pass" class="login-input" placeholder="password">
+    <button class="login-btn" onclick="doLogin()">შესვლა →</button>
+    <div class="login-demos">
+      <div class="login-demos-title">სადემონსტრაციო ანგარიშები</div>
+      <button class="demo-btn" onclick="fillDemo('hr.admin','admin123')">hr.admin / admin123 <span class="demo-badge badge-hr-tag">HR Admin</span></button>
+      <button class="demo-btn" onclick="fillDemo('hr.local','local123')">hr.local / local123 <span class="demo-badge badge-local-tag">ლოკალური HR</span></button>
+      <button class="demo-btn" onclick="fillDemo('manager1','mgr123')">manager1 / mgr123 <span class="demo-badge badge-mgr-tag">ხელმძღვანელი</span></button>
+      <button class="demo-btn" onclick="fillDemo('director','dir123')">director / dir123 <span class="demo-badge badge-dir-tag">გენერალური დირ.</span></button>
+      <button class="demo-btn" onclick="fillDemo('employee1','emp123')">employee1 / emp123 <span class="demo-badge badge-emp-tag">დასაქმებული</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div id="portal">
+ <div class="portal-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">TourInvest<span> HR</span></div>
+      <div class="sidebar-sub">გამოსაცდელი ვადის სისტემა</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-user-name" id="sb-name">—</div>
+      <div class="sidebar-user-role" id="sb-role">—</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">მთავარი</div>
+        <div class="nav-item active" data-view="dashboard" onclick="nav('dashboard')"><span class="icon">📊</span>Dashboard</div>
+        <div class="nav-item" data-view="notifications" onclick="nav('notifications')" id="nav-notif"><span class="icon">🔔</span>შეტყობინებები<span class="nav-badge" id="notif-badge" style="display:none">0</span></div>
+      </div>
+      <div class="nav-section" id="nav-hr">
+        <div class="nav-section-label">მართვა</div>
+        <div class="nav-item" data-view="employees" onclick="nav('employees')"><span class="icon">👥</span>დასაქმებულები</div>
+        <div class="nav-item" data-view="reports" onclick="nav('reports')"><span class="icon">📈</span>ანგარიშები</div>
+      </div>
+      <div class="nav-section" id="nav-emp" style="display:none">
+        <div class="nav-section-label">ჩემი</div>
+        <div class="nav-item" data-view="my-probation" onclick="nav('my-probation')"><span class="icon">📋</span>ჩემი გამოსაცდელი ვადა</div>
+      </div>
+    </nav>
+    <div class="sidebar-logout"><div class="logout-btn" onclick="doLogout()"><span>🚪</span>გასვლა</div></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="notif-btn" onclick="nav('notifications')">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></button>
+        <span style="font-size:13px;color:var(--text-muted)" id="topbar-user">—</span>
+      </div>
+    </header>
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <div id="view-dashboard" class="view active">
+        <div class="view-header">
+          <div class="view-title" id="dash-title">Dashboard</div>
+          <div class="view-subtitle" id="dash-date">—</div>
+        </div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card"><div class="card-title">📅 მოახლოებული ვადები</div><div id="upcoming-deadlines"></div></div>
+          <div class="card"><div class="card-title">⚡ ბოლო აქტივობა</div><div id="recent-activity"></div></div>
+        </div>
+        <div id="critical-section"></div>
+      </div>
+
+      <!-- EMPLOYEES -->
+      <div id="view-employees" class="view">
+        <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <div><div class="view-title">👥 დასაქმებულები</div><div class="view-subtitle">გამოსაცდელ ვადაზე მყოფი პერსონალი</div></div>
+          <button class="btn btn-primary" onclick="openAddEmployee()" id="btn-add-emp">+ დამატება</button>
+        </div>
+        <div class="card">
+          <div class="filter-bar">
+            <input type="text" class="search-input" placeholder="🔍 სახელი, პოზიცია, კომპანია..." oninput="renderEmpTable()" id="emp-search">
+            <select class="filter-select" onchange="renderEmpTable()" id="filter-status">
+              <option value="">ყველა სტატუსი</option><option value="active">აქტიური</option>
+              <option value="monitoring">მონიტორინგი</option><option value="passed">გავლილი</option><option value="terminated">შეწყვეტილი</option>
+            </select>
+            <select class="filter-select" onchange="renderEmpTable()" id="filter-co"><option value="">ყველა კომპანია</option></select>
+          </div>
+          <div class="tbl-wrap">
+            <table class="data-table">
+              <thead><tr><th>დასაქმებული</th><th>კომპანია / განყოფილება</th><th>სამუშაოს დაწყება</th><th>ეტაპი</th><th>სტატუსი</th><th>ფორმები</th><th></th></tr></thead>
+              <tbody id="emp-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPLOYEE DETAIL -->
+      <div id="view-employee-detail" class="view">
+        <div style="margin-bottom:14px"><button class="btn btn-outline btn-sm" onclick="nav('employees')">← უკან</button></div>
+        <div id="emp-detail"></div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div id="view-notifications" class="view">
+        <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <div><div class="view-title">🔔 შეტყობინებები</div></div>
+          <button class="btn btn-outline btn-sm" onclick="markAllRead()">ყველა / წაუკითხავი</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="notif-list"></div></div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="view-reports" class="view">
+        <div class="view-header"><div class="view-title">📈 ანგარიშები</div></div>
+        <div id="reports-content"></div>
+      </div>
+
+      <!-- MY PROBATION -->
+      <div id="view-my-probation" class="view">
+        <div class="view-header"><div class="view-title">📋 ჩემი გამოსაცდელი ვადა</div></div>
+        <div id="my-prob-content"></div>
+      </div>
+
+    </main>
+  </div>
+ </div>
+</div>
+
+<!-- MODAL: ADD EMPLOYEE -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><h2>➕ ახალი დასაქმებული</h2><div class="sub">ყველა <span style="color:var(--red)">*</span> ველი სავალდებულოა</div></div><button class="modal-close" onclick="closeModal('modal-add')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-section"><div class="form-section-title"><span>1</span> ძირითადი მონაცემები</div>
+        <div class="form-section-body">
+          <div class="form-grid-2">
+            <div class="field-group"><label class="field-label">სახელი, გვარი <span class="req">*</span></label><input class="field-input" id="ae-name" placeholder="მარიამ გელაშვილი"></div>
+            <div class="field-group"><label class="field-label">კომპანია <span class="req">*</span></label>
+              <select class="field-input" id="ae-company"><option value="">— —</option>
+                <option>TourInvest Group (Holding)</option><option>Riverside Boutique Hotel</option>
+                <option>Mountain View Resort</option><option>Georgia Taste Restaurant</option>
+                <option>TourInvest Travel</option><option>TI Entertainment</option><option>TI Technical Services</option>
+              </select>
+            </div>
+            <div class="field-group"><label class="field-label">პოზიცია <span class="req">*</span></label><input class="field-input" id="ae-position"></div>
+            <div class="field-group"><label class="field-label">განყოფილება <span class="req">*</span></label><input class="field-input" id="ae-dept"></div>
+            <div class="field-group"><label class="field-label">სამუშაოს დაწყება <span class="req">*</span></label><input class="field-input" type="date" id="ae-startdate"></div>
+            <div class="field-group"><label class="field-label">გამოსაცდელი ვადა</label>
+              <select class="field-input" id="ae-duration"><option value="6">6 თვე (სტანდარტული)</option><option value="3">3 თვე</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section"><div class="form-section-title"><span>2</span> პოზიციის ტიპი და შეწონვის სქემა</div>
+        <div class="form-section-body">
+          <div class="notice">პოზიციის ტიპი განსაზღვრავს ბლოკების წილს საბოლოო ქულაში. მონიშნეთ.</div>
+          <table class="pos-table" id="ae-pos-table"><thead>
+            <tr><th>პოზიციის ტიპი</th><th>ბლ.ა</th><th>ბლ.ბ</th><th>ბლ.გ</th></tr>
+          </thead><tbody>
+            <tr onclick="selPosType('operational',this)"><td><strong>ოპერაციული</strong> — სტ./კლ.: პირდ. მომს.</td><td>60%</td><td>40%</td><td>—</td></tr>
+            <tr onclick="selPosType('office',this)"><td><strong>საოფისე / ადმინ.</strong> — მხ-დ. ფუნქ. (HR, IT, ფინ.)</td><td>40%</td><td>60%</td><td>—</td></tr>
+            <tr onclick="selPosType('managerial-goals',this)"><td><strong>მენეჯერული + მიზნებით</strong></td><td>30%</td><td>30%</td><td>40%</td></tr>
+            <tr onclick="selPosType('managerial-no-goals',this)"><td><strong>მენეჯერული (მიზნების გარეშე)</strong></td><td>40%</td><td>60%</td><td>—</td></tr>
+          </tbody></table>
+          <input type="hidden" id="ae-postype">
+        </div>
+      </div>
+      <div class="form-section"><div class="form-section-title"><span>3</span> პასუხისმგებელი პირები</div>
+        <div class="form-section-body">
+          <div class="form-grid-3">
+            <div class="field-group"><label class="field-label">HR <span class="req">*</span></label><select class="field-input" id="ae-hr"><option value="">—</option></select></div>
+            <div class="field-group"><label class="field-label">ხელმძღვანელი <span class="req">*</span></label><select class="field-input" id="ae-mgr"><option value="">—</option></select></div>
+            <div class="field-group"><label class="field-label">საშუალო რგოლის ხელმძღვანელი</label><select class="field-input" id="ae-midmgr"><option value="">(სურვ.)</option></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add')">გაუქმება</button>
+      <button class="btn btn-primary" onclick="saveNewEmployee()">✓ შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FORM 1 -->
+<div class="modal-overlay" id="modal-f1">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><h2>ფორმა 1 — კრიტერიუმების გაცნობა</h2><div class="sub">სამ. დაწ-დან 14 კალ. დღეში</div></div><button class="modal-close" onclick="closeModal('modal-f1')">✕</button></div>
+    <div class="modal-body">
+      <div class="notice"><strong>სავ.:</strong> ყველა პუნქტი შეამოწ. ფ. ინახება საქმეში.</div>
+      <div id="f1-info" style="background:var(--gray-100);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:13px;"></div>
+      <div class="form-section"><div class="form-section-title"><span>1</span> გაცნობის ჩეკლისტი</div><div class="form-section-body" id="f1-checks"></div></div>
+      <div class="form-section" id="f1-goals-sec" style="display:none"><div class="form-section-title"><span>2</span> დანართი 1 — სამუშაო მიზნები</div><div class="form-section-body" id="f1-goals"></div></div>
+      <div class="form-section"><div class="form-section-title"><span>3</span> დასტური</div>
+        <div class="form-section-body">
+          <div class="form-grid-2">
+            <div class="field-group"><label class="field-label">გაცნობის თარიღი <span class="req">*</span></label><input class="field-input" type="date" id="f1-date"></div>
+            <div class="field-group"><label class="field-label">HR</label><input class="field-input" id="f1-hr-name" readonly></div>
+          </div>
+          <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-size:13px;cursor:pointer;line-height:1.5">
+            <input type="checkbox" id="f1-confirm" style="margin-top:2px;width:15px;height:15px;flex-shrink:0">
+            ვადასტურებ, რომ გავეცანი ყველა კრიტერიუმს, ეტაპს, შედეგებს და კომპანიის პოლიტიკას
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-f1')">დახურვა</button>
+      <button class="btn btn-primary" onclick="saveF1()">✓ შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FORM 2 -->
+<div class="modal-overlay" id="modal-f2">
+  <div class="modal">
+    <div class="modal-header"><div><h2 id="f2-title">ფორმა 2 — 1:1 შეხვედრა</h2><div class="sub" id="f2-sub">—</div></div><button class="modal-close" onclick="closeModal('modal-f2')">✕</button></div>
+    <div class="modal-body">
+      <div class="notice">შეხვედრა — შეფასებამდე ≥2 კვირით ადრე HR/ხელმძღვანელი და დასაქმებული ერთობლივად განიხილავენ.</div>
+      <div id="f2-info" style="background:var(--gray-100);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:13px;"></div>
+      <div class="form-grid-2" style="margin-bottom:12px">
+        <div class="field-group"><label class="field-label">შეხვედრის თარიღი <span class="req">*</span></label><input class="field-input" type="date" id="f2-date"></div>
+        <div class="field-group"><label class="field-label">ფორმატი</label>
+          <select class="field-input" id="f2-format"><option>პირდაპირი შეხვედრა</option><option>ვიდეო</option><option>ჰიბრიდული</option></select>
+        </div>
+      </div>
+      <div class="form-section"><div class="form-section-title"><span>1</span> განხილული თემები</div><div class="form-section-body" id="f2-topics"></div></div>
+      <div class="form-section"><div class="form-section-title"><span>2</span> შეთანხმებები / სამოქმედო გეგმა</div>
+        <div class="form-section-body">
+          <div class="field-group"><label class="field-label">ძირითადი შეთანხმებები / სამოქმედო პუნქტები</label><textarea class="field-input" id="f2-notes" rows="3" placeholder="შეხვედრის გადაწ., ვადები..."></textarea></div>
+          <div class="field-group"><label class="field-label">დასაქმებულის კომენტარი / შეკითხვები</label><textarea class="field-input" id="f2-emp-note" rows="2" placeholder="კითხვები, წინ..."></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-f2')">დახურვა</button>
+      <button class="btn btn-primary" onclick="saveF2()">✓ შეხვედრა დასრულდა</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FORM 3 (Self-Eval) -->
+<div class="modal-overlay" id="modal-f3">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><h2 id="f3-title">ფორმა 3 — თვითშეფასება</h2><div class="sub" id="f3-sub">—</div></div><button class="modal-close" onclick="closeModal('modal-f3')">✕</button></div>
+    <div class="modal-body">
+      <div class="notice">შეაფასეთ გულწრფელად 1–5. შეფასება ხელმძღვანელს არ გადაეცემა — გამოიყენება 1:1 შეხვედრაზე</div>
+      <div id="f3-info" style="background:var(--gray-100);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:13px;"></div>
+      <div class="form-section">
+        <div class="form-section-title" style="background:#1e6090">🅐 ბლოკი ა — ოპერაციული ეფექტიანობა</div>
+        <div class="form-section-body" id="f3-a"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" style="background:#2d4a6b">🅑 ბლოკი ბ — ქცევა და კომპეტენციები</div>
+        <div class="form-section-body" id="f3-b"></div>
+      </div>
+      <div class="form-section" id="f3-g-sec" style="display:none">
+        <div class="form-section-title" style="background:#6b5d2d">🅖 ბლოკი გ — სამუშაო მიზნები</div>
+        <div class="form-section-body" id="f3-g"></div>
+      </div>
+      <div class="field-group"><label class="field-label">ზოგადი კომენტარი (სურვილისამებრ)</label><textarea class="field-input" id="f3-gen" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-f3')">დახურვა</button>
+      <button class="btn btn-primary" onclick="saveF3()">✓ გაგზავნა</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: FORM 4 (Manager Eval) -->
+<div class="modal-overlay" id="modal-f4">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><h2 id="f4-title">ფორმა 4 — ხელმძღვანელის შეფასება</h2><div class="sub" id="f4-sub">—</div></div><button class="modal-close" onclick="closeModal('modal-f4')">✕</button></div>
+    <div class="modal-body">
+      <div class="notice"><strong>სავალდებულო:</strong> ყველა კრ. შეფ. — კ. ფაქტი, სიტ., მ.</div>
+      <div id="f4-info" style="background:var(--gray-100);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:13px;"></div>
+      <div style="border:1.5px solid var(--red-light);border-radius:var(--radius);padding:12px;margin-bottom:14px;background:var(--red-light);">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:var(--red)">
+          <input type="checkbox" id="f4-critical" style="margin-top:2px;width:15px;height:15px;flex-shrink:0" onchange="toggleCritical()">
+          🚨 კრიტ./უხეში დარღვევა — შეწყვეტა, დამოუკიდებელი საფუძვლით
+        </label>
+        <textarea class="field-input" id="f4-crit-desc" rows="2" placeholder="კრიტიკული დარღვევის აღწერა..." style="margin-top:8px;display:none;"></textarea>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" style="background:#1e6090">🅐 ბლოკი ა — ოპერაციული ეფექტიანობა</div>
+        <div class="form-section-body" id="f4-a"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" style="background:#2d4a6b">🅑 ბლოკი ბ — ქცევა და კომპეტენციები</div>
+        <div class="form-section-body" id="f4-b"></div>
+      </div>
+      <div class="form-section" id="f4-g-sec" style="display:none">
+        <div class="form-section-title" style="background:#6b5d2d">🅖 ბლოკი გ — სამუშაო მიზნები</div>
+        <div class="form-section-body" id="f4-g"></div>
+      </div>
+      <div id="f4-score-panel" style="display:none">
+        <div class="score-display">
+          <div style="font-size:13px;color:rgba(255,255,255,.65)">საბოლოო შეწონილი ქულა</div>
+          <div class="score-big" id="f4-total">—</div>
+          <div id="f4-verdict"></div>
+        </div>
+        <div class="score-blocks" id="f4-blocks"></div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field-group"><label class="field-label">შეფასების თარიღი <span class="req">*</span></label><input class="field-input" type="date" id="f4-date"></div>
+        <div class="field-group"><label class="field-label">ზოგადი კომენტარი</label><textarea class="field-input" id="f4-gen" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="calcScores()" style="margin-right:auto">🔄 ქულის გამოთვლა</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-f4')">დახურვა</button>
+      <button class="btn btn-primary" onclick="saveF4()">✓ შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal modal-sm">
+    <div class="modal-header"><h2 id="conf-title">დადასტურება</h2><button class="modal-close" onclick="closeModal('modal-confirm')">✕</button></div>
+    <div class="modal-body"><p id="conf-msg" style="font-size:14px;line-height:1.6"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirm')">გაუქმება</button>
+      <button class="btn btn-danger" id="conf-ok">დადასტურება</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:none">
+  <div style="background:var(--navy);color:#fff;padding:12px 20px;border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:13.5px;display:flex;align-items:center;gap:10px">
+    <span id="t-icon">✓</span><span id="t-msg">—</span>
+  </div>
+</div>
+<script>
+const USERS=[
+  {id:'u1',username:'hr.admin', password:'admin123',name:'ნინო ჩიქოვანი',   role:'hr_admin', company:'TourInvest Group (Holding)'},
+  {id:'u2',username:'hr.local', password:'local123',name:'თამარ ბერიძე',    role:'hr_local', company:'Riverside Boutique Hotel'},
+  {id:'u3',username:'manager1', password:'mgr123',  name:'გიორგი ქობულია',  role:'manager',  company:'Riverside Boutique Hotel'},
+  {id:'u4',username:'director', password:'dir123',  name:'ლევან სახვაძე',   role:'director', company:'TourInvest Group (Holding)'},
+  {id:'u5',username:'employee1',password:'emp123',  name:'ანა მხეიძე',      role:'employee', company:'Riverside Boutique Hotel'},
+  {id:'u6',username:'manager2', password:'mgr456',  name:'სოფია ჯავახიძე',    role:'manager',  company:'Georgia Taste Restaurant'},
+];
+const ROLE_LABELS={hr_admin:'HR ადმინი',hr_local:'ლოკალური HR',manager:'ხელმძღვანელი',director:'გენერალური დირექტორი',employee:'დასაქმებული'};
+const POS_W={operational:{a:.6,b:.4,g:0},office:{a:.4,b:.6,g:0},'managerial-goals':{a:.3,b:.3,g:.4},'managerial-no-goals':{a:.4,b:.6,g:0}};
+const POS_L={operational:'ოპერაციული',office:'საოფისე / ადმინისტრაცია','managerial-goals':'მენეჯერი + მიზნებით','managerial-no-goals':'მენეჯერი (მიზნების გარეშე)'};
+const A_ITEMS=[
+  {id:'a1',t:'სამუშაო ფუნქციების შესრულება',d:'ძირითადი ფუნქციები, ტექნიკური სტანდარტები, ოპერაციული მოთხოვნები'},
+  {id:'a2',t:'სამუშაო დროის ორგანიზება და პრიორიტეტები',d:'სამუშაო დროის მართვა, ვადების დაცვა, პრიორიტეტები'},
+  {id:'a3',t:'სტანდარტებისა და კორპორაციული პოლიტიკის დაცვა',d:'შვებულება, შრომის სტანდარტები, ჰიგიენა / უსაფრთხოება'},
+  {id:'a4',t:'მომსახურების ხარისხი და პრობლემების თავიდან აცილება',d:'სტუმრის / კლიენტის მომსახურების ხარისხი და პრობლემების გადაჭრა'},
+];
+const B_ITEMS=[
+  {id:'b1',t:'პროფესიული კომუნიკაცია და ქცევა სამუშაო გარემოში',d:'კომუნიკაციის ტონი, ინფორმაციის სიზუსტე, ეთიკა, კონფლიქტური სიტუაციები'},
+  {id:'b2',t:'ადაპტირება და სწავლის სისწრაფე',d:'ახალი ცოდნის ათვისება, უკუკავშირის გამოყენება, განვითარება'},
+  {id:'b3',t:'გუნდური მუშაობა და კოლაბორაცია',d:'ინფორმაციის გაზიარება, კოლეგების მხარდაჭერა, გუნდური ჩართულობა'},
+  {id:'b4',t:'პროაქტიული მუშაობა და ინიციატივა',d:'ინიციატივის გამოჩენა, გაუმჯობესების იდეები, პრობლემის გადაჭრა'},
+];
+
+function today(){return new Date().toISOString().split('T')[0];}
+function addD(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().split('T')[0];}
+function diffD(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function fmt(d){if(!d)return'—';return new Date(d+'T12:00').toLocaleDateString('ka-GE',{day:'2-digit',month:'2-digit',year:'numeric'});}
+
+function seedData(){
+  const t=today();
+  const emps=[
+    {id:'e1',name:'ანა მხეიძე',co:'Riverside Boutique Hotel',dept:'Front Office',pos:'Front Office Agent',
+     posType:'operational',start:addD(t,-45),dur:6,status:'active',
+     hrId:'u2',mgrId:'u3',midId:'',crit:false,critDesc:'',
+     forms:{f1:{s:'completed',d:addD(t,-44)},f2_3:{s:'pending',d:'',data:{}},f3_3:{s:'pending',d:'',data:{}},f4_3:{s:'pending',d:'',data:{}},
+            f2_5:{s:'pending',d:'',data:{}},f3_5:{s:'pending',d:'',data:{}},f4_5:{s:'pending',d:'',data:{}}},
+     finalResult:'',acts:[{d:addD(t,-44),m:'ფორმა 1 შევსდა',u:'თამარ ბერიძე'}]},
+    {id:'e2',name:'დავით ლომიძე',co:'Riverside Boutique Hotel',dept:'F&B',pos:'Restaurant Supervisor',
+     posType:'managerial-goals',start:addD(t,-85),dur:6,status:'monitoring',
+     hrId:'u2',mgrId:'u3',midId:'',crit:false,critDesc:'',
+     forms:{f1:{s:'completed',d:addD(t,-84)},
+            f2_3:{s:'completed',d:addD(t,-6),data:{notes:'კარგი პროგრესი',fmt:'პირდაპირი'}},
+            f3_3:{s:'completed',d:addD(t,-4),data:{scores:{a1:4,a2:3,a3:4,a4:4,b1:3,b2:4,b3:3,b4:3}}},
+            f4_3:{s:'completed',d:addD(t,-3),data:{scores:{a1:4,a2:3,a3:4,a4:4,b1:4,b2:3,b3:3,b4:4},bA:3.75,bB:3.50,bG:0,total:2.74,verdict:'monitoring',evalDate:addD(t,-3),gen:'კარგი კანდ., შემდ. ეტ.'}},
+            f2_5:{s:'pending',d:'',data:{}},f3_5:{s:'pending',d:'',data:{}},f4_5:{s:'pending',d:'',data:{}}},
+     finalResult:'',acts:[{d:addD(t,-84),m:'ფორმა 1 — შევსდა',u:'თამარ ბერიძე'},{d:addD(t,-6),m:'1:1 შეხვედრა (3-თვ.)',u:'გიორგი ქობულია'},{d:addD(t,-3),m:'3-თვ. შეფასება — მონიტ. 2.74',u:'გიორგი ქობულია'}]},
+    {id:'e3',name:'მარიამ გელაშვილი',co:'Georgia Taste Restaurant',dept:'Kitchen',pos:'Sous Chef',
+     posType:'operational',start:addD(t,-20),dur:6,status:'active',
+     hrId:'u1',mgrId:'u6',midId:'',crit:false,critDesc:'',
+     forms:{f1:{s:'overdue',d:''},f2_3:{s:'pending',d:'',data:{}},f3_3:{s:'pending',d:'',data:{}},f4_3:{s:'pending',d:'',data:{}},
+            f2_5:{s:'pending',d:'',data:{}},f3_5:{s:'pending',d:'',data:{}},f4_5:{s:'pending',d:'',data:{}}},
+     finalResult:'',acts:[]},
+    {id:'e4',name:'ნიკოლოზ ჯანელიძე',co:'TourInvest Travel',dept:'Sales',pos:'Sales Manager',
+     posType:'managerial-goals',start:addD(t,-170),dur:6,status:'passed',
+     hrId:'u1',mgrId:'u3',midId:'',crit:false,critDesc:'',
+     forms:{f1:{s:'completed',d:addD(t,-169)},
+            f2_3:{s:'completed',d:addD(t,-90),data:{}},f3_3:{s:'completed',d:addD(t,-85),data:{}},
+            f4_3:{s:'completed',d:addD(t,-84),data:{bA:4.25,bB:4.0,bG:4.0,total:4.1,verdict:'passed',evalDate:addD(t,-84),gen:'ძლიერი კანდიდატი'}},
+            f2_5:{s:'completed',d:addD(t,-10),data:{}},f3_5:{s:'completed',d:addD(t,-7),data:{}},
+            f4_5:{s:'completed',d:addD(t,-5),data:{bA:4.5,bB:4.25,bG:4.3,total:4.35,verdict:'passed',evalDate:addD(t,-5),gen:'წარმატებული გავლა'}}},
+     finalResult:'passed',acts:[{d:addD(t,-5),m:'საბოლოო შეფასება — გავლილი 4.35',u:'ნინო ჩიქოვანი'}]},
+  ];
+  localStorage.setItem('ti_emps',JSON.stringify(emps));
+  localStorage.setItem('ti_notifs',JSON.stringify([]));
+}
+
+function getEmps(){return JSON.parse(localStorage.getItem('ti_emps')||'[]');}
+function saveEmps(e){localStorage.setItem('ti_emps',JSON.stringify(e));}
+function getNotifs(){return JSON.parse(localStorage.getItem('ti_notifs')||'[]');}
+function saveNotifs(n){localStorage.setItem('ti_notifs',JSON.stringify(n));}
+
+let CU=null,CID=null,CST=null;
+
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim(),p=document.getElementById('l-pass').value;
+  const f=USERS.find(x=>x.username===u&&x.password===p);
+  if(!f){document.getElementById('login-error').style.display='block';return;}
+  document.getElementById('login-error').style.display='none';
+  CU=f;initPortal();
+}
+function fillDemo(u,p){document.getElementById('l-user').value=u;document.getElementById('l-pass').value=p;doLogin();}
+function doLogout(){CU=null;document.getElementById('portal').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('l-pass').value='';}
+
+function initPortal(){
+  if(!localStorage.getItem('ti_emps'))seedData();
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('portal').style.display='block';
+  document.getElementById('sb-name').textContent=CU.name;
+  document.getElementById('sb-role').textContent=ROLE_LABELS[CU.role]||CU.role;
+  document.getElementById('topbar-user').textContent=CU.name;
+  const isEmp=CU.role==='employee',isDir=CU.role==='director';
+  document.getElementById('nav-hr').style.display=isEmp?'none':'';
+  document.getElementById('nav-emp').style.display=isEmp?'':'none';
+  document.getElementById('btn-add-emp').style.display=(isEmp||isDir)?'none':'';
+  genNotifs();nav(isEmp?'my-probation':'dashboard');
+}
+
+function nav(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  const ve=document.getElementById('view-'+v);if(ve)ve.classList.add('active');
+  const ni=document.querySelector('[data-view="'+v+'"]');if(ni)ni.classList.add('active');
+  const titles={dashboard:'Dashboard',employees:'👥 დასაქმებულები',notifications:'🔔 შეტყობინებები',
+    reports:'📈 ანგარიშები','employee-detail':'დასაქმებულის პროფილი','my-probation':'📋 ჩემი გამოსაცდელი ვადა'};
+  document.getElementById('page-title').textContent=titles[v]||'';
+  if(v==='dashboard')renderDash();
+  else if(v==='employees')renderEmps();
+  else if(v==='notifications')renderNotifs();
+  else if(v==='reports')renderReports();
+  else if(v==='my-probation')renderMyProb();
+}
+
+function filterEmps(emps){
+  if(!CU)return[];
+  if(['hr_admin','director'].includes(CU.role))return emps;
+  if(CU.role==='hr_local')return emps.filter(e=>e.co===CU.company);
+  if(CU.role==='manager')return emps.filter(e=>e.mgrId===CU.id||e.midId===CU.id);
+  if(CU.role==='employee')return emps.filter(e=>e.name===CU.name);
+  return emps;
+}
+
+function genNotifs(){
+  const emps=getEmps(),ns=[],t=today();
+  filterEmps(emps).forEach(e=>{
+    if(e.status==='passed'||e.status==='terminated')return;
+    if(e.forms.f1.s!=='completed'){
+      const dl=addD(e.start,14),dd=diffD(t,dl);
+      ns.push({id:'f1_'+e.id,type:dd<0?'danger':'warn',icon:dd<0?'🚨':'⏰',
+        title:(dd<0?'ფ.1 — კრიტ. ვადა გასულია: ':'ფ.1 — ვადა: ')+e.name,
+        desc:'კრიტ. გაცნობის ვადა: '+fmt(dl)+(dd<0?' — '+Math.abs(dd)+' დ. გადაცილება':', '+dd+' დ. დარჩა'),
+        empId:e.id,dt:t,read:false,roles:['hr_admin','hr_local']});
+    }
+    [['3',90],['5',150]].forEach(([mo,days])=>{
+      const key='f4_'+mo;
+      if(e.forms[key].s!=='completed'){
+        const dl=addD(e.start,days),dd=diffD(t,dl);
+        if(Math.abs(dd)<=21)ns.push({id:key+'_'+e.id,type:dd<0?'danger':'info',icon:dd<0?'🚨':'📋',
+          title:`${mo}-თვ. შეფასება: ${e.name}`,desc:fmt(dl)+(dd<0?' — '+Math.abs(dd)+' დ. გადაცილება':' — '+dd+' დ. დარჩა'),
+          empId:e.id,dt:t,read:false,roles:['hr_admin','hr_local','manager']});
+      }
+    });
+    if(e.crit)ns.push({id:'crit_'+e.id,type:'danger',icon:'🚨',title:'კრ. დარღვევა: '+e.name,
+      desc:e.critDesc||'HR ესკალაცია სავალდებულოა',empId:e.id,dt:t,read:false,roles:['hr_admin','director']});
+  });
+  saveNotifs(ns);updBadge();
+}
+
+function myNotifs(){return getNotifs().filter(n=>(n.roles||[]).includes(CU?.role));}
+function updBadge(){
+  const c=myNotifs().filter(n=>!n.read).length;
+  ['notif-badge','notif-dot'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=c?'':'none';});
+  const b=document.getElementById('notif-badge');if(b)b.textContent=c;
+}
+function markAllRead(){const ns=getNotifs();ns.forEach(n=>{if((n.roles||[]).includes(CU?.role))n.read=true;});saveNotifs(ns);updBadge();renderNotifs();}
+
+// DASHBOARD
+function renderDash(){
+  const emps=filterEmps(getEmps()),t=today();
+  const d=new Date();
+  document.getElementById('dash-title').textContent='გამარჯობა, '+CU.name;
+  document.getElementById('dash-date').textContent=d.toLocaleDateString('ka-GE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const active=emps.filter(e=>e.status==='active').length;
+  const mon=emps.filter(e=>e.status==='monitoring').length;
+  const passed=emps.filter(e=>e.status==='passed').length;
+  const crit=emps.filter(e=>e.crit||e.forms.f1.s==='overdue').length;
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi-card"><div class="kpi-label">აქტიური</div><div class="kpi-value">${active}</div><div class="kpi-sub">გამოსაცდელ ვადაზე</div></div>
+    <div class="kpi-card kpi-amber"><div class="kpi-label">მონიტორინგი</div><div class="kpi-value">${mon}</div><div class="kpi-sub">3-თვ. შეფ. გრძელდება</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-label">გავლილი</div><div class="kpi-value">${passed}</div><div class="kpi-sub">წარმატებული დასრულება</div></div>
+    <div class="kpi-card kpi-red"><div class="kpi-label">კრიტიკული / ვადაგასული</div><div class="kpi-value">${crit}</div><div class="kpi-sub">ყურადღება საჭიროა</div></div>`;
+  // upcoming
+  const up=[];
+  emps.forEach(e=>{
+    if(e.status==='passed'||e.status==='terminated')return;
+    if(e.forms.f1.s!=='completed'){const dl=addD(e.start,14),dd=diffD(t,dl);if(dd>=-7)up.push({n:e.name,f:'ფ. 1',dl,dd,id:e.id,cls:dd<0?'days-over':dd<=3?'days-warn':'days-ok'});}
+    [['3',76],['5',136]].forEach(([mo,d2])=>{const k='f2_'+mo;if(e.forms[k].s!=='completed'){const dl=addD(e.start,d2),dd=diffD(t,dl);if(Math.abs(dd)<=14)up.push({n:e.name,f:'1:1('+mo+')',dl,dd,id:e.id,cls:dd<0?'days-over':dd<=5?'days-warn':'days-ok'});}});
+    [['3',90],['5',150]].forEach(([mo,d2])=>{const k='f4_'+mo;if(e.forms[k].s!=='completed'){const dl=addD(e.start,d2),dd=diffD(t,dl);if(Math.abs(dd)<=21)up.push({n:e.name,f:'ფ.4('+mo+')',dl,dd,id:e.id,cls:dd<0?'days-over':dd<=7?'days-warn':'days-ok'});}});
+  });
+  up.sort((a,b)=>a.dd-b.dd);
+  const upEl=document.getElementById('upcoming-deadlines');
+  upEl.innerHTML=up.length?`<table class="data-table"><thead><tr><th>დასაქმებული</th><th>ფორმა</th><th>ვადა</th><th>დღეები</th></tr></thead><tbody>${
+    up.slice(0,7).map(u=>`<tr onclick="openDet('${u.id}')" style="cursor:pointer"><td>${u.n}</td><td>${u.f}</td><td>${fmt(u.dl)}</td><td><span class="days-badge ${u.cls}">${u.dd<0?Math.abs(u.dd)+' დ. გ.':u.dd+' დ.'}</span></td></tr>`).join('')
+  }</tbody></table>`:
+  '<div style="text-align:center;padding:24px;color:var(--text-muted)">✅ ახლო ვადა არ არის</div>';
+  // activity
+  const acts=[];emps.forEach(e=>(e.acts||[]).forEach(a=>acts.push({...a,en:e.name,eid:e.id})));
+  acts.sort((a,b)=>b.d.localeCompare(a.d));
+  document.getElementById('recent-activity').innerHTML=acts.length?
+    acts.slice(0,6).map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--gray-200)">
+      <div style="font-weight:600;color:var(--navy);cursor:pointer" onclick="openDet('${a.eid}')">${a.en}</div>
+      <div style="color:var(--text-muted);font-size:12.5px">${a.m}</div>
+      <div style="color:var(--gray-500);font-size:11px">${fmt(a.d)} · ${a.u}</div>
+    </div>`).join(''):
+    '<div style="text-align:center;padding:24px;color:var(--text-muted)">📭 ისტ. ცარ.</div>';
+  const critEmps=emps.filter(e=>e.crit);
+  document.getElementById('critical-section').innerHTML=critEmps.length?
+    `<div class="card"><div class="card-title" style="color:var(--red)">🚨 კრ. დარღვევა — HR ესკ.</div>${
+    critEmps.map(e=>`<div class="critical-flag" style="cursor:pointer;margin-bottom:6px" onclick="openDet('${e.id}')">🚨 ${e.name} — ${e.critDesc||'კრ. დარღვევა'}</div>`).join('')
+    }</div>`:'';
+}
+
+// EMPLOYEES
+function renderEmps(){
+  const emps=filterEmps(getEmps());
+  const cos=[...new Set(emps.map(e=>e.co))];
+  const cf=document.getElementById('filter-co');
+  cf.innerHTML='<option value="">ყველა კომპანია</option>'+cos.map(c=>`<option>${c}</option>`).join('');
+  renderEmpTable();
+}
+function renderEmpTable(){
+  const q=(document.getElementById('emp-search')?.value||'').toLowerCase();
+  const fs=document.getElementById('filter-status')?.value||'';
+  const fc=document.getElementById('filter-co')?.value||'';
+  const emps=filterEmps(getEmps()).filter(e=>{
+    return(!q||e.name.toLowerCase().includes(q)||e.pos.toLowerCase().includes(q)||e.co.toLowerCase().includes(q))&&(!fs||e.status===fs)&&(!fc||e.co===fc);
+  });
+  const t=today();
+  document.getElementById('emp-tbody').innerHTML=emps.length?emps.map(e=>{
+    const d90=diffD(t,addD(e.start,90)),d150=diffD(t,addD(e.start,150));
+    let stage='—';
+    if(e.status==='passed')stage='<span style="color:var(--green)">✅ გავლილი</span>';
+    else if(e.status==='terminated')stage='<span style="color:var(--red)">❌ შეწყვეტილი</span>';
+    else if(d90>0)stage=`<span class="days-badge days-ok">3-თვ: ${d90}დ.</span>`;
+    else if(d150>0)stage=`<span class="days-badge days-warn">5-თვ: ${d150}დ.</span>`;
+    else stage=`<span class="days-badge days-over">ვ. გ.</span>`;
+    const stBadge={active:'badge-active',monitoring:'badge-monitoring',passed:'badge-passed',terminated:'badge-terminated'}[e.status]||'badge-pending';
+    const chips=fmtChips(e,t);
+    return`<tr onclick="openDet('${e.id}')" style="cursor:pointer">
+      <td><div style="font-weight:600;color:var(--navy)">${e.name}${e.crit?' 🚨':''}</div><div style="font-size:11.5px;color:var(--text-muted)">${e.pos}</div></td>
+      <td><div>${e.co}</div><div style="font-size:11.5px;color:var(--text-muted)">${e.dept}</div></td>
+      <td>${fmt(e.start)}</td><td>${stage}</td>
+      <td><span class="badge ${stBadge}">${{active:'აქტიური',monitoring:'მონიტორინგი',passed:'გავლილი',terminated:'შეწყვეტილი'}[e.status]||e.status}</span></td>
+      <td>${chips}</td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-outline btn-sm" onclick="openDet('${e.id}')">→</button></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">მონაცემი არ მოიძებნა</td></tr>';
+}
+function fmtChips(e,t){
+  const items=[
+    {l:'ფ. 1',s:e.forms.f1.s,dl:addD(e.start,14)},
+    {l:'1:1(3)',s:e.forms.f2_3.s,dl:addD(e.start,76)},
+    {l:'ფ.3(3)',s:e.forms.f3_3.s,dl:addD(e.start,84)},
+    {l:'ფ.4(3)',s:e.forms.f4_3.s,dl:addD(e.start,90)},
+  ];
+  if(e.forms.f4_3.s==='completed'){
+    items.push({l:'1:1(5)',s:e.forms.f2_5.s,dl:addD(e.start,136)});
+    items.push({l:'ფ.4(5)',s:e.forms.f4_5.s,dl:addD(e.start,150)});
+  }
+  return'<div class="form-status-row">'+items.map(i=>{
+    let cls='pending',ic='○';
+    if(i.s==='completed'){cls='done';ic='✓';}
+    else if(i.s==='overdue'||diffD(t,i.dl)<0){cls='overdue';ic='⚠';}
+    else if(diffD(t,i.dl)<=7){cls='upcoming';ic='◎';}
+    return`<span class="form-chip ${cls}">${ic}${i.l}</span>`;
+  }).join('')+'</div>';
+}
+
+// EMPLOYEE DETAIL
+function openDet(id){CID=id;nav('employee-detail');renderDet();}
+function renderDet(){
+  const emps=getEmps();const e=emps.find(x=>x.id===CID);if(!e)return;
+  const t=today();const w=POS_W[e.posType]||POS_W.operational;
+  const probEnd=addD(e.start,e.dur*30);const dl=diffD(t,probEnd);
+  const init=e.name.split(' ').map(x=>x[0]).join('');
+  const hr=USERS.find(u=>u.id===e.hrId),mgr=USERS.find(u=>u.id===e.mgrId);
+  const stBadge={active:'badge-active',monitoring:'badge-monitoring',passed:'badge-passed',terminated:'badge-terminated'}[e.status]||'badge-pending';
+  const stL={active:'აქტიური',monitoring:'მონიტორინგი',passed:'გავლილი',terminated:'შეწყვეტილი'}[e.status]||e.status;
+  const canEd=CU&&['hr_admin','hr_local','manager'].includes(CU.role);
+  document.getElementById('emp-detail').innerHTML=`
+  <div class="emp-header">
+    <div class="emp-avatar">${init}</div>
+    <div class="emp-info">
+      <div class="emp-name">${e.name} ${e.crit?'<span class="critical-flag" style="font-size:11px;padding:3px 8px">🚨 კრ. დარღვ.</span>':''}</div>
+      <div class="emp-position">${e.pos} · ${e.dept} · ${e.co}</div>
+      <div class="emp-meta">
+        <div class="emp-meta-item"><span class="emp-meta-label">დაწყება:</span>${fmt(e.start)}</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">ვადის ბოლო:</span>${fmt(probEnd)}</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">დარჩა:</span><span class="days-badge ${dl<0?'days-over':dl<14?'days-warn':'days-ok'}">${dl<0?Math.abs(dl)+' დ. გ.':dl+' დ.'}</span></div>
+        <div class="emp-meta-item"><span class="emp-meta-label">სქემა:</span>${POS_L[e.posType]||'—'} (ა:${Math.round(w.a*100)}% ბ:${Math.round(w.b*100)}%${w.g?' გ:'+Math.round(w.g*100)+'%':''})</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">HR:</span>${hr?.name||'—'}</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">ხელმძღვანელი:</span>${mgr?.name||'—'}</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <span class="badge ${stBadge}" style="font-size:12px;padding:5px 12px">${stL}</span>
+      ${canEd&&(e.status==='active'||e.status==='monitoring')?`
+      <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">
+        <button class="btn btn-danger btn-sm" onclick="confTerminate('${e.id}')">შეწყვეტა</button>
+        ${e.status==='monitoring'?`<button class="btn btn-green btn-sm" onclick="confPass('${e.id}')">✓ გავლილია</button>`:''}
+      </div>`:''}
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('tl',this)">📅 ეტაპები / ფორმები</button>
+    <button class="tab-btn" onclick="switchTab('sc',this)">📊 ქულები</button>
+    <button class="tab-btn" onclick="switchTab('ac',this)">📝 ისტორია</button>
+  </div>
+  <div id="tab-tl" class="tab-content active">${buildTimeline(e,t,w,canEd)}</div>
+  <div id="tab-sc" class="tab-content">${buildScores(e,w)}</div>
+  <div id="tab-ac" class="tab-content">${buildActs(e)}</div>`;
+}
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');
+}
+function buildTimeline(e,t,w,canEd){
+  const stages=[
+    {k:'f1',  lbl:'ფორმა 1 — კრიტერიუმების გაცნობა',       dl:addD(e.start,14), who:'HR',    act:`openForm('f1','${e.id}',null)`},
+    {k:'f2_3',lbl:'1:1 შეხვედრა (3-თვ.)',                  dl:addD(e.start,76), who:'HR / ხელმძღვანელი', act:`openForm('f2','${e.id}','3')`},
+    {k:'f3_3',lbl:'ფორმა 3 — თვითშეფასება (3-თვ.)',        dl:addD(e.start,84), who:'დასაქმებული', act:`openForm('f3','${e.id}','3')`},
+    {k:'f4_3',lbl:'ფორმა 4 — შეფასება (3-თვ.)',            dl:addD(e.start,90), who:'ხელმძღვანელი', act:`openForm('f4','${e.id}','3')`},
+    {k:'f2_5',lbl:'1:1 შეხვედრა (5-თვ.)',                  dl:addD(e.start,136),who:'HR / ხელმძღვანელი', act:`openForm('f2','${e.id}','5')`},
+    {k:'f3_5',lbl:'ფორმა 3 — თვითშეფასება (5-თვ.)',        dl:addD(e.start,143),who:'დასაქმებული', act:`openForm('f3','${e.id}','5')`},
+    {k:'f4_5',lbl:'ფორმა 4 — შეფასება (5-თვ.)',            dl:addD(e.start,150),who:'ხელმძღვანელი', act:`openForm('f4','${e.id}','5')`},
+  ];
+  return'<div class="timeline">'+stages.map(s=>{
+    const f=e.forms[s.k],st=f.s,dd=diffD(t,s.dl);
+    const dc=st==='completed'?'done':dd<0?'overdue':dd<=7?'active':'pending';
+    const badge=st==='completed'?`<span class="days-badge days-done">✓ ${fmt(f.d)}</span>`:
+      dd<0?`<span class="days-badge days-over">${Math.abs(dd)} დ. გ.</span>`:
+      dd<=7?`<span class="days-badge days-warn">${dd} დ.</span>`:
+      `<span class="days-badge days-ok">${dd} დ.</span>`;
+    const canAct=canEd&&st!=='completed'&&['active','monitoring'].includes(e.status);
+    const miniScore=st==='completed'&&s.k.startsWith('f4')?buildMiniScore(f.data):'';
+    return`<div class="tl-item">
+      <div class="tl-dot ${dc}">${st==='completed'?'✓':''}</div>
+      <div class="tl-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div class="tl-title">${s.lbl}</div>${badge}
+        </div>
+        <div class="tl-meta">ვ: ${fmt(s.dl)} · ${s.who}</div>
+        ${miniScore}
+        ${canAct?`<div class="tl-actions"><button class="btn btn-teal btn-sm" onclick="${s.act}">📝 ${st==='pending'?'შევსება':'განახლება'}</button></div>`:''}
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function buildMiniScore(d){
+  if(!d||!d.total)return'';
+  const cls=d.verdict==='passed'?'verdict-pass':d.verdict==='monitoring'?'verdict-monitor':'verdict-fail';
+  const lbl=d.verdict==='passed'?'გავლილი':d.verdict==='monitoring'?'მონიტორინგი':'შეწყვეტა';
+  return`<div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12.5px">
+    ქ: <strong>${d.total?.toFixed(2)}</strong><span class="result-verdict ${cls}" style="font-size:11px;padding:3px 10px">${lbl}</span>
+  </div>`;
+}
+function buildScores(e,w){
+  return['3','5'].map(mo=>{
+    const k='f4_'+mo,f=e.forms[k];
+    if(f.s!=='completed'||!f.data?.total)return`<div class="card" style="margin-bottom:12px"><div class="card-title">${mo}-თვ. შ.</div><div style="color:var(--text-muted)">ჯ. არ ჩაება</div></div>`;
+    const d=f.data;const cls=d.verdict==='passed'?'verdict-pass':d.verdict==='monitoring'?'verdict-monitor':'verdict-fail';
+    const lbl=d.verdict==='passed'?'✅ გავლა':d.verdict==='monitoring'?'⚠️ მონიტორინგი':'❌ შეწყვეტა';
+    return`<div class="card" style="margin-bottom:12px">
+      <div class="card-title">${mo}-თვ. შეფასება · ${fmt(d.evalDate||'')}</div>
+      <div class="score-display" style="margin-bottom:12px">
+        <div style="font-size:13px;color:rgba(255,255,255,.65)">საბოლოო ქულა</div>
+        <div class="score-big">${d.total?.toFixed(2)}</div>
+        <span class="result-verdict ${cls}" style="margin-top:8px">${lbl}</span>
+      </div>
+      <div class="score-blocks">
+        <div class="score-block-card"><div class="sbc-label">ბლოკი ა ${Math.round(w.a*100)}%</div><div class="sbc-score">${(d.bA||0).toFixed(2)}</div></div>
+        <div class="score-block-card block-b"><div class="sbc-label">ბლოკი ბ ${Math.round(w.b*100)}%</div><div class="sbc-score">${(d.bB||0).toFixed(2)}</div></div>
+        ${w.g?`<div class="score-block-card block-g"><div class="sbc-label">ბლოკი გ ${Math.round(w.g*100)}%</div><div class="sbc-score">${(d.bG||0).toFixed(2)}</div></div>`:''}
+      </div>
+      ${d.gen?`<div class="notice" style="margin-top:10px"><strong>კომენტარი:</strong> ${d.gen}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function buildActs(e){
+  const acts=(e.acts||[]).slice().reverse();
+  return acts.length?`<div class="card" style="padding:0;overflow:hidden">${acts.map(a=>`
+    <div class="notif-item"><div class="notif-icon ni-info">📋</div>
+    <div class="notif-body"><div class="notif-title">${a.m}</div><div class="notif-time">${fmt(a.d)} · ${a.u}</div></div></div>`).join('')}</div>`:
+    '<div class="empty-state"><div class="icon">📭</div><div class="msg">ისტ. ცარიელია</div></div>';
+}
+
+// FORMS
+function openForm(type,id,stage){
+  CID=id;CST=stage;
+  const emps=getEmps();const e=emps.find(x=>x.id===id);if(!e)return;
+  const w=POS_W[e.posType]||POS_W.operational;
+  const info=`<strong>${e.name}</strong> · ${e.pos} · ${e.co}<br><span style="color:var(--text-muted)">სქ: ${POS_L[e.posType]||'—'} · დ: ${fmt(e.start)}</span>`;
+  if(type==='f1'){
+    document.getElementById('f1-info').innerHTML=info;
+    document.getElementById('f1-date').value=today();
+    document.getElementById('f1-hr-name').value=USERS.find(u=>u.id===e.hrId)?.name||'';
+    document.getElementById('f1-confirm').checked=false;
+    document.getElementById('f1-goals-sec').style.display=e.posType==='managerial-goals'?'':'none';
+    if(e.posType==='managerial-goals'){
+      document.getElementById('f1-goals').innerHTML=`
+        <div class="notice warn">ამ პოზიციისთვის განსაზღვრული მიზნები გამოიყენება ბლ. გ-ს შეფ.ებ.აში.</div>
+        <div class="field-group"><label class="field-label">მიზანი 1 <span class="req">*</span></label><input class="field-input" id="g1" placeholder="კონკრეტული, გაზომვადი, ვადიანი მიზანი"></div>
+        <div class="field-group"><label class="field-label">მიზანი 2</label><input class="field-input" id="g2"></div>
+        <div class="field-group"><label class="field-label">მიზანი 3</label><input class="field-input" id="g3"></div>`;
+    }
+    const checks=[
+      'სამუშაო ფუნქციები და შეფასების კრიტერიუმები განხილულია',
+      'შეფასების სისტემა, ბლოკები, ქულის სქემა განხილულია',
+      'შეფასების ეტაპები, ვადები, შუალედური / საბოლოო შეფასება განხილულია',
+      '1:1 შეხვედრის ფორმატი განხილულია',
+      'შუალედური შეფასების პროცედურა განხილულია',
+      'შეწონვის სქემა (ბლოკების წილი) განხილულია',
+      'კრიტიკული დარღვევა → შეწყვეტის საფუძველი განხილულია',
+      'შეწყვეტის ნიშნები განხილულია',
+      'პირადი მიზნები და დამატებითი პოლიტიკა განხილულია'
+    ];
+    document.getElementById('f1-checks').innerHTML=checks.map((c,i)=>`
+      <div class="checklist-item"><input type="checkbox" id="ck${i}"><label for="ck${i}">${c}</label></div>`).join('');
+    openModal('modal-f1');
+  }else if(type==='f2'){
+    document.getElementById('f2-title').textContent=`ფორმა 2 — 1:1 შეხვედრა (${stage}-თვ.)`;
+    document.getElementById('f2-sub').textContent=`${e.name} · ${stage}-თვ. შეხვედრა`;
+    document.getElementById('f2-info').innerHTML=info;
+    document.getElementById('f2-date').value=today();
+    document.getElementById('f2-notes').value='';document.getElementById('f2-emp-note').value='';
+    const tops=[
+      `${stage}-თვ. — შეფასების ვადები`,
+      `${stage}-თვ. — მიმდინარეობის მიმოხილვა`,
+      'გამოწვევები, გამოცდილება, საჭიროებები',
+      'უკუკავშირი, კომუნიკაცია, მხარდაჭერა',
+      stage==='3'?'3-თვ. შეფასების შედეგები':'საბოლოო შეფასების პროცედურა'
+    ];
+    document.getElementById('f2-topics').innerHTML=tops.map((t2,i)=>`
+      <div class="checklist-item"><input type="checkbox" id="t${i}"><label for="t${i}">${t2}</label></div>`).join('');
+    openModal('modal-f2');
+  }else if(type==='f3'){
+    document.getElementById('f3-title').textContent=`ფორმა 3 — თვითშეფასება (${stage}-თვ.)`;
+    document.getElementById('f3-sub').textContent=e.name+' · '+fmt(e.start);
+    document.getElementById('f3-info').innerHTML=info;
+    document.getElementById('f3-gen').value='';
+    document.getElementById('f3-g-sec').style.display=w.g?'':'none';
+    document.getElementById('f3-a').innerHTML=buildEvalBs(A_ITEMS,'f3a',false);
+    document.getElementById('f3-b').innerHTML=buildEvalBs(B_ITEMS,'f3b',false);
+    if(w.g)document.getElementById('f3-g').innerHTML=buildGBs('f3g',false);
+    openModal('modal-f3');
+  }else if(type==='f4'){
+    document.getElementById('f4-title').textContent=`ფორმა 4 — შეფასება (${stage}-თვ.)`;
+    document.getElementById('f4-sub').textContent=`${e.name} · ${POS_L[e.posType]} · ${fmt(e.start)}`;
+    document.getElementById('f4-info').innerHTML=info;
+    document.getElementById('f4-critical').checked=false;
+    document.getElementById('f4-crit-desc').style.display='none';document.getElementById('f4-crit-desc').value='';
+    document.getElementById('f4-date').value=today();document.getElementById('f4-gen').value='';
+    document.getElementById('f4-score-panel').style.display='none';
+    document.getElementById('f4-g-sec').style.display=w.g?'':'none';
+    document.getElementById('f4-a').innerHTML=buildEvalBs(A_ITEMS,'f4a',true);
+    document.getElementById('f4-b').innerHTML=buildEvalBs(B_ITEMS,'f4b',true);
+    if(w.g)document.getElementById('f4-g').innerHTML=buildGBs('f4g',true);
+    openModal('modal-f4');
+  }
+}
+function buildEvalBs(items,pfx,withCom){
+  return items.map((it,i)=>`
+    <div class="eval-block">
+      <div class="eval-block-header">
+        <div class="eval-block-num">${i+1}</div>
+        <div class="eval-block-info"><div class="eval-block-title">${it.t}</div><div class="eval-block-desc">${it.d}</div></div>
+      </div>
+      <div class="eval-block-body">
+        <div class="rating-labels">${[1,2,3,4,5].map(n=>`<div class="rating-label">${n}</div>`).join('')}</div>
+        <div class="rating-row">${[1,2,3,4,5].map(n=>`<button class="rating-btn" id="${pfx}_${it.id}_${n}" onclick="selR('${pfx}','${it.id}',${n})">${n}</button>`).join('')}</div>
+        ${withCom?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">კომენტ. <span style="color:var(--red)">*</span></div><textarea class="comment-field" id="${pfx}_c_${it.id}" placeholder="კომ., ფაქტი, სიტ., მ..."></textarea>`:''}
+      </div>
+    </div>`).join('');
+}
+function buildGBs(pfx,withCom){
+  return`<div class="notice warn">ბლ.გ — მიზ. შ. 1-5.</div>`+
+  [1,2,3].map(i=>`
+    <div class="eval-block">
+      <div class="eval-block-header"><div class="eval-block-num">${i}</div><div class="eval-block-info"><div class="eval-block-title">მიზ.${i}</div></div></div>
+      <div class="eval-block-body">
+        <div class="rating-labels">${[1,2,3,4,5].map(n=>`<div class="rating-label">${n}</div>`).join('')}</div>
+        <div class="rating-row">${[1,2,3,4,5].map(n=>`<button class="rating-btn" id="${pfx}_g${i}_${n}" onclick="selR('${pfx}','g${i}',${n})">${n}</button>`).join('')}</div>
+        ${withCom?`<textarea class="comment-field" id="${pfx}_c_g${i}" placeholder="მიზნ. შეფ. კომ..."></textarea>`:''}
+      </div>
+    </div>`).join('');
+}
+function selR(pfx,id,score){
+  [1,2,3,4,5].forEach(n=>{const b=document.getElementById(`${pfx}_${id}_${n}`);if(b)b.className='rating-btn'+(n===score?` sel-${n}`:'');});
+}
+function getR(pfx,id){for(let n=1;n<=5;n++){const b=document.getElementById(`${pfx}_${id}_${n}`);if(b&&b.className.includes(`sel-${n}`))return n;}return null;}
+function toggleCritical(){document.getElementById('f4-crit-desc').style.display=document.getElementById('f4-critical').checked?'':'none';}
+
+function saveF1(){
+  const d=document.getElementById('f1-date').value,conf=document.getElementById('f1-confirm').checked;
+  const chks=[...document.querySelectorAll('#f1-checks input[type=checkbox]')].every(c=>c.checked);
+  if(!d||!conf||!chks){toast('⚠️','ყველა ველი სავალდებულო',true);return;}
+  const emps=getEmps();const i=emps.findIndex(e=>e.id===CID);
+  emps[i].forms.f1={s:'completed',d};addAct(emps[i],'ფ.1 — კრიტ. გაცნობა');
+  saveEmps(emps);closeModal('modal-f1');toast('✓','ფ. 1 შევსებულია');genNotifs();renderDet();
+}
+function saveF2(){
+  const d=document.getElementById('f2-date').value;if(!d){toast('⚠️','თარიღი სავ.',true);return;}
+  const emps=getEmps();const i=emps.findIndex(e=>e.id===CID);
+  emps[i].forms[`f2_${CST}`]={s:'completed',d,data:{notes:document.getElementById('f2-notes').value,fmt:document.getElementById('f2-format').value}};
+  addAct(emps[i],`1:1 შეხვ. (${CST}-თვ.)`);saveEmps(emps);closeModal('modal-f2');toast('✓',`ფ. 2 (${CST}-თვ.) შევს.`);genNotifs();renderDet();
+}
+function saveF3(){
+  const aS={},bS={};let ok=true;
+  A_ITEMS.forEach(it=>{const r=getR('f3a',it.id);if(!r)ok=false;else aS[it.id]=r;});
+  B_ITEMS.forEach(it=>{const r=getR('f3b',it.id);if(!r)ok=false;else bS[it.id]=r;});
+  if(!ok){toast('⚠️','ყველა კრიტ. სავ-ბ.',true);return;}
+  const emps=getEmps();const i=emps.findIndex(e=>e.id===CID);
+  emps[i].forms[`f3_${CST}`]={s:'completed',d:today(),data:{scores:{...aS,...bS},gen:document.getElementById('f3-gen').value}};
+  addAct(emps[i],`ფ. 3 თვ. (${CST}-თვ.)`);saveEmps(emps);closeModal('modal-f3');toast('✓',`ფ. 3 (${CST}-თვ.) შევ.`);genNotifs();renderDet();
+}
+function calcScores(){
+  const emps=getEmps();const e=emps.find(x=>x.id===CID);if(!e)return null;
+  const w=POS_W[e.posType]||POS_W.operational;
+  const aS=A_ITEMS.map(it=>getR('f4a',it.id));const bS=B_ITEMS.map(it=>getR('f4b',it.id));
+  if(aS.some(s=>!s)||bS.some(s=>!s)){toast('⚠️','ყველა ქ. სავ.',true);return null;}
+  const bA=aS.reduce((a,b)=>a+b,0)/aS.length;
+  const bB=bS.reduce((a,b)=>a+b,0)/bS.length;
+  let bG=0;
+  if(w.g){const gS=[1,2,3].map(i=>getR('f4g','g'+i)).filter(Boolean);if(gS.length)bG=gS.reduce((a,b)=>a+b,0)/gS.length;}
+  const total=bA*w.a+bB*w.b+(w.g?bG*w.g:0);
+  const crit=document.getElementById('f4-critical').checked;
+  let verdict='';
+  if(crit||total<2.5||bA<2.5||bB<2.5||(w.g&&bG<2.5))verdict='terminated';
+  else if(CST==='3'&&total>=2.5&&total<3.0&&bA>=2.5&&bB>=2.5)verdict='monitoring';
+  else if(total>=3.0&&bA>=3.0&&bB>=3.0&&(!w.g||bG>=3.0))verdict='passed';
+  else verdict='terminated';
+  const cls={passed:'verdict-pass',monitoring:'verdict-monitor',terminated:'verdict-fail'}[verdict];
+  const lbl={passed:'✅ გავლა',monitoring:'⚠️ მონიტორინგი',terminated:'❌ შეწყვეტა'}[verdict];
+  document.getElementById('f4-total').textContent=total.toFixed(2);
+  document.getElementById('f4-verdict').innerHTML=`<span class="result-verdict ${cls}">${lbl}</span>`;
+  document.getElementById('f4-blocks').innerHTML=`
+    <div class="score-block-card"><div class="sbc-label">ბლოკი ა ${Math.round(w.a*100)}%</div><div class="sbc-score" style="${bA<3?'color:var(--red)':''}">${bA.toFixed(2)}</div></div>
+    <div class="score-block-card block-b"><div class="sbc-label">ბლოკი ბ ${Math.round(w.b*100)}%</div><div class="sbc-score">${bB.toFixed(2)}</div></div>
+    ${w.g?`<div class="score-block-card block-g"><div class="sbc-label">ბლოკი გ ${Math.round(w.g*100)}%</div><div class="sbc-score">${bG.toFixed(2)}</div></div>`:''}`;
+  document.getElementById('f4-score-panel').style.display='';
+  return{bA,bB,bG,total,verdict};
+}
+function saveF4(){
+  const dt=document.getElementById('f4-date').value;if(!dt){toast('⚠️','თარიღი სავ.',true);return;}
+  const res=calcScores();if(!res)return;
+  const emps=getEmps();const i=emps.findIndex(e=>e.id===CID);
+  const crit=document.getElementById('f4-critical').checked,critDesc=document.getElementById('f4-crit-desc').value;
+  emps[i].forms[`f4_${CST}`]={s:'completed',d:dt,data:{...res,evalDate:dt,gen:document.getElementById('f4-gen').value,crit,critDesc}};
+  if(crit){emps[i].crit=true;emps[i].critDesc=critDesc;}
+  const vL={passed:'გავლილი',monitoring:'მონიტორინგი',terminated:'შეწყვეტა'}[res.verdict]||res.verdict;
+  addAct(emps[i],`ფ.4 (${CST}-თ.) — ${vL} ${res.total.toFixed(2)}`);
+  if(CST==='3'){if(res.verdict==='monitoring')emps[i].status='monitoring';else if(res.verdict==='terminated')emps[i].status='terminated';}
+  if(CST==='5'){emps[i].finalResult=res.verdict;if(res.verdict==='passed')emps[i].status='passed';else if(res.verdict==='terminated')emps[i].status='terminated';}
+  saveEmps(emps);closeModal('modal-f4');toast('✓',`ფ. 4 (${CST}-თვ.) — ${vL}`);genNotifs();renderDet();
+}
+function addAct(e,m){if(!e.acts)e.acts=[];e.acts.push({d:today(),m,u:CU?.name||'სისტემა'});}
+
+// ADD EMPLOYEE
+let selPT='';
+function selPosType(t,row){
+  selPT=t;document.querySelectorAll('#ae-pos-table tr').forEach(r=>r.classList.remove('selected'));
+  row.classList.add('selected');document.getElementById('ae-postype').value=t;
+}
+function openAddEmployee(){
+  selPT='';document.querySelectorAll('#ae-pos-table tr').forEach(r=>r.classList.remove('selected'));
+  ['ae-name','ae-position','ae-dept'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ae-company').value='';document.getElementById('ae-startdate').value=today();
+  const hrs=USERS.filter(u=>['hr_admin','hr_local'].includes(u.role));
+  const mgrs=USERS.filter(u=>u.role==='manager');
+  document.getElementById('ae-hr').innerHTML='<option value="">—</option>'+hrs.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('ae-mgr').innerHTML='<option value="">—</option>'+mgrs.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('ae-midmgr').innerHTML='<option value="">(სურვ.)</option>'+mgrs.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  openModal('modal-add');
+}
+function saveNewEmployee(){
+  const name=document.getElementById('ae-name').value.trim();
+  const co=document.getElementById('ae-company').value;
+  const pos=document.getElementById('ae-position').value.trim();
+  const dept=document.getElementById('ae-dept').value.trim();
+  const start=document.getElementById('ae-startdate').value;
+  const posType=document.getElementById('ae-postype').value;
+  const hrId=document.getElementById('ae-hr').value;
+  const mgrId=document.getElementById('ae-mgr').value;
+  if(!name||!co||!pos||!dept||!start||!posType||!hrId||!mgrId){toast('⚠️','ყველა სავალდ. ველი',true);return;}
+  const emps=getEmps();
+  emps.push({id:'e'+Date.now(),name,co,dept,pos,posType,start,dur:parseInt(document.getElementById('ae-duration').value),
+    status:'active',hrId,mgrId,midId:document.getElementById('ae-midmgr').value,crit:false,critDesc:'',
+    forms:{f1:{s:'pending',d:''},f2_3:{s:'pending',d:'',data:{}},f3_3:{s:'pending',d:'',data:{}},f4_3:{s:'pending',d:'',data:{}},
+           f2_5:{s:'pending',d:'',data:{}},f3_5:{s:'pending',d:'',data:{}},f4_5:{s:'pending',d:'',data:{}}},
+    finalResult:'',acts:[{d:today(),m:'სისტემაში დაემატა',u:CU?.name||'HR'}]});
+  saveEmps(emps);closeModal('modal-add');toast('✓',name+' — დაემატა');genNotifs();renderEmps();
+}
+
+// CONFIRM
+function confTerminate(id){
+  const e=getEmps().find(x=>x.id===id);
+  document.getElementById('conf-title').textContent='შეწყვეტა';
+  document.getElementById('conf-msg').innerHTML=`<strong>${e?.name}</strong> — გამოსაცდელი ვადა შეწყდეს?`;
+  document.getElementById('conf-ok').style.background='var(--red)';
+  document.getElementById('conf-ok').onclick=()=>{const es=getEmps();const i=es.findIndex(x=>x.id===id);es[i].status='terminated';addAct(es[i],'შეწყვეტა');saveEmps(es);closeModal('modal-confirm');toast('✓','შეწყვეტა ✓');genNotifs();renderDet();};
+  openModal('modal-confirm');
+}
+function confPass(id){
+  const e=getEmps().find(x=>x.id===id);
+  document.getElementById('conf-title').textContent='გამ. ვადა — გავლა';
+  document.getElementById('conf-msg').innerHTML=`<strong>${e?.name}</strong> — გამოსაცდელი ვადა გავლილია?`;
+  document.getElementById('conf-ok').style.background='var(--green)';
+  document.getElementById('conf-ok').onclick=()=>{const es=getEmps();const i=es.findIndex(x=>x.id===id);es[i].status='passed';es[i].finalResult='passed';addAct(es[i],'გამ. ვადა გავლილი ✅');saveEmps(es);closeModal('modal-confirm');toast('✓','გ.ვ. გავლა ✅');genNotifs();renderDet();};
+  openModal('modal-confirm');
+}
+
+// NOTIFICATIONS
+function renderNotifs(){
+  const ns=myNotifs();
+  document.getElementById('notif-list').innerHTML=ns.length?ns.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}" onclick="notifClick('${n.id}','${n.empId||''}')">
+      <div class="notif-icon ${n.type==='danger'?'ni-danger':n.type==='warn'?'ni-warn':'ni-info'}">${n.icon}</div>
+      <div class="notif-body"><div class="notif-title">${n.title}</div><div class="notif-desc">${n.desc}</div><div class="notif-time">${fmt(n.dt)}</div></div>
+      ${!n.read?'<div style="width:8px;height:8px;background:var(--teal);border-radius:50%;flex-shrink:0;margin-top:4px"></div>':''}
+    </div>`).join(''):
+    '<div class="empty-state"><div class="icon">🔔</div><div class="msg">შეტყობინება არ არის</div></div>';
+}
+function notifClick(nid,empId){
+  const ns=getNotifs();const n=ns.find(x=>x.id===nid);if(n)n.read=true;saveNotifs(ns);updBadge();
+  if(empId)openDet(empId);else renderNotifs();
+}
+
+// REPORTS
+function renderReports(){
+  const emps=filterEmps(getEmps());
+  const tot=emps.length,act=emps.filter(e=>e.status==='active').length;
+  const mon=emps.filter(e=>e.status==='monitoring').length;
+  const pass=emps.filter(e=>e.status==='passed').length;
+  const term=emps.filter(e=>e.status==='terminated').length;
+  const f1d=emps.filter(e=>e.forms.f1.s==='completed').length;
+  const f1ov=emps.filter(e=>e.forms.f1.s!=='completed'&&diffD(today(),addD(e.start,14))<0).length;
+  const scores=emps.filter(e=>e.forms.f4_3.data?.total).map(e=>e.forms.f4_3.data.total);
+  const avgS=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+  const byCo={};emps.forEach(e=>{if(!byCo[e.co])byCo[e.co]={t:0,a:0,p:0,x:0};byCo[e.co].t++;byCo[e.co][{active:'a',passed:'p',terminated:'x',monitoring:'a'}[e.status]||'t']++;});
+  document.getElementById('reports-content').innerHTML=`
+  <div class="kpi-grid" style="margin-bottom:16px">
+    <div class="kpi-card"><div class="kpi-label">სულ</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-label">გავლა %</div><div class="kpi-value">${tot?Math.round(pass/(pass+term||1)*100):0}%</div></div>
+    <div class="kpi-card"><div class="kpi-label">საშ. 3-თვ. ქ.</div><div class="kpi-value">${avgS?avgS.toFixed(2):'—'}</div></div>
+    <div class="kpi-card kpi-red"><div class="kpi-label">ფ.1 ვ.გ.</div><div class="kpi-value">${f1ov}</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">სტატუსის განაწილება</div>
+      ${[['აქტ.',act,'fill-teal'],['მონიტორინგი',mon,'fill-amber'],['გავლ.',pass,'fill-green'],['შეწყვეტილი',term,'fill-red']].map(([l,v,c])=>`
+      <div class="chart-bar-group"><div class="chart-bar-label"><span>${l}</span><span>${v}</span></div>
+        <div class="chart-bar-wrap"><div class="chart-bar-fill ${c}" style="width:${tot?Math.round(v/tot*100):0}%"></div></div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">კომპანიები</div>
+      <table class="data-table"><thead><tr><th>კომპანია</th><th>სულ</th><th>აქტ.</th><th>გავლ.</th><th>შეწყვეტილი</th></tr></thead><tbody>
+        ${Object.entries(byCo).map(([co,d])=>`<tr><td style="font-size:11.5px">${co.split(' ').slice(0,2).join(' ')}</td><td>${d.t}</td><td>${d.a||0}</td><td>${d.p||0}</td><td>${d.x||0}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">ფ.1 — სტატუსი</div>
+    ${[['შეევსო',f1d,'fill-green'],['ვ. გ.',f1ov,'fill-red'],['მოლ.',tot-f1d-f1ov,'fill-teal']].map(([l,v,c])=>`
+    <div class="chart-bar-group"><div class="chart-bar-label"><span>${l}</span><span>${v}</span></div>
+      <div class="chart-bar-wrap"><div class="chart-bar-fill ${c}" style="width:${tot?Math.round(v/tot*100):0}%"></div></div></div>`).join('')}
+  </div>`;
+}
+
+// MY PROBATION
+function renderMyProb(){
+  const e=filterEmps(getEmps())[0];
+  if(!e){document.getElementById('my-prob-content').innerHTML='<div class="empty-state"><div class="icon">📋</div><div class="msg">ჩ-ბ. ვ. არ მ.</div><div class="sub" style="margin-top:6px">HR-ს დ-ვ.</div></div>';return;}
+  CID=e.id;const t=today();const w=POS_W[e.posType]||POS_W.operational;
+  const probEnd=addD(e.start,e.dur*30);const dl=diffD(t,probEnd);
+  const init=e.name.split(' ').map(x=>x[0]).join('');
+  document.getElementById('my-prob-content').innerHTML=`
+  <div class="emp-header">
+    <div class="emp-avatar">${init}</div>
+    <div class="emp-info">
+      <div class="emp-name">${e.name}</div>
+      <div class="emp-position">${e.pos} · ${e.co}</div>
+      <div class="emp-meta">
+        <div class="emp-meta-item"><span class="emp-meta-label">დაწყება:</span>${fmt(e.start)}</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">ვადის ბოლო:</span>${fmt(probEnd)}</div>
+        <div class="emp-meta-item"><span class="emp-meta-label">დარჩა:</span><span class="days-badge ${dl<0?'days-over':dl<14?'days-warn':'days-ok'}">${dl<0?Math.abs(dl)+' დ. გ.':dl+' დ.'}</span></div>
+        <div class="emp-meta-item"><span class="emp-meta-label">სქემა:</span>${POS_L[e.posType]||'—'}</div>
+      </div>
+    </div>
+    <span class="badge ${{active:'badge-active',monitoring:'badge-monitoring',passed:'badge-passed',terminated:'badge-terminated'}[e.status]||'badge-pending'}" style="font-size:12px;padding:5px 12px">${{active:'აქტიური',monitoring:'მონიტორინგი',passed:'გავლილი',terminated:'შეწყვეტილი'}[e.status]}</span>
+  </div>
+  <div class="card">
+    <div class="card-title">📅 ეტაპები და ფორმები</div>
+    ${buildTimeline(e,t,w,false)}
+  </div>
+  ${buildScores(e,w)?`<div class="card" style="margin-top:14px"><div class="card-title">📊 ქულები</div>${buildScores(e,w)}</div>`:''}`;
+}
+
+// UTILS
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));});
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+let _tt;
+function toast(icon,msg,err=false){
+  const t=document.getElementById('toast');
+  document.getElementById('t-icon').textContent=icon;document.getElementById('t-msg').textContent=msg;
+  const inner=t.firstElementChild;if(inner)inner.style.background=err?'var(--red)':'var(--navy)';
+  t.style.display='';clearTimeout(_tt);_tt=setTimeout(()=>{t.style.display='none';},3200);
+}
+
+// INIT
+window.onload=function(){
+  document.getElementById('login-screen').style.display='flex';
+};
+</script>
+</body>
+</html>
