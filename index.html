@@ -1816,8 +1816,12 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
           <div class="form-grid-2">
             <div class="field-group"><label class="field-label">სახელი</label><input type="text" class="field-input" id="wiz-fname" placeholder="მაია"></div>
             <div class="field-group"><label class="field-label">გვარი</label><input type="text" class="field-input" id="wiz-lname" placeholder="ბერიძე"></div>
-            <div class="field-group"><label class="field-label">კომპანია</label><input type="text" class="field-input" id="wiz-company" placeholder="კომპანია"></div>
-            <div class="field-group"><label class="field-label">სტრუქტურული ერთეული</label><input type="text" class="field-input" id="wiz-unit" placeholder="განყოფილება"></div>
+            <div class="field-group"><label class="field-label">კომპანია</label>
+              <select class="field-input" id="wiz-company" onchange="onWizCompanyChange()"><option value="">— კომპანია —</option></select>
+            </div>
+            <div class="field-group"><label class="field-label">სტრუქტურული ერთეული</label>
+              <select class="field-input" id="wiz-unit"><option value="">— ჯერ კომპანია აირჩიეთ —</option></select>
+            </div>
           </div>
         </div>
       </div>
@@ -1874,8 +1878,12 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
           <div class="field-group"><label class="field-label">გვარი</label><input type="text" class="field-input" id="ud-lname"></div>
           <div class="field-group"><label class="field-label">ელ.ფოსტა</label><input type="email" class="field-input" id="ud-email"></div>
           <div class="field-group"><label class="field-label">Username</label><input type="text" class="field-input" id="ud-username"></div>
-          <div class="field-group"><label class="field-label">კომპანია</label><input type="text" class="field-input" id="ud-company"></div>
-          <div class="field-group"><label class="field-label">სტრუქტურული ერთეული</label><input type="text" class="field-input" id="ud-unit"></div>
+          <div class="field-group"><label class="field-label">კომპანია</label>
+            <select class="field-input" id="ud-company" onchange="onUdCompanyChange()"><option value="">— კომპანია —</option></select>
+          </div>
+          <div class="field-group"><label class="field-label">სტრუქტურული ერთეული</label>
+            <select class="field-input" id="ud-unit"><option value="">— ჯერ კომპანია აირჩიეთ —</option></select>
+          </div>
           <div class="field-group"><label class="field-label">სტატუსი</label>
             <select class="field-input" id="ud-status">
               <option value="active">Active</option>
@@ -6557,6 +6565,85 @@ window.saveRole = function(andClose){
     saveSysRoles(roles2);
   }
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   USER FORM — Company & Unit Dropdowns
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Fill any <select> with companies from the system.
+   value = company name (for backward-compat with existing string-based storage).
+   If selectedName is not in the list, it is added as the first option so existing
+   data is never lost after the switch from text input to dropdown. */
+function populateUserCompanyDropdown(selectId, selectedName){
+  var el = document.getElementById(selectId); if(!el) return;
+  var cos = getAllCompanies();
+  // ensure the currently-saved company appears even if not in org module yet
+  if(selectedName && !cos.find(function(c){return c.name===selectedName;})){
+    cos = [{name:selectedName}].concat(cos);
+  }
+  el.innerHTML = '<option value="">— კომპანია —</option>' +
+    cos.map(function(c){
+      var sel = (selectedName && c.name === selectedName) ? ' selected' : '';
+      return '<option value="'+c.name.replace(/"/g,'&quot;')+'"'+sel+'>'+c.name+'</option>';
+    }).join('');
+}
+
+/* Fill unit dropdown filtered by company name.
+   value = unit name (for backward-compat).
+   If selectedUnitName is not in the filtered list, it is added so existing data is preserved. */
+function populateUserUnitDropdown(selectId, companyName, selectedUnitName){
+  var el = document.getElementById(selectId); if(!el) return;
+  if(!companyName){
+    el.innerHTML = '<option value="">— ჯერ კომპანია აირჩიეთ —</option>';
+    return;
+  }
+  var units = getAllStructuralUnits().filter(function(u){
+    return !u.isGroup && u.parent === companyName;
+  });
+  if(selectedUnitName && !units.find(function(u){return u.name===selectedUnitName;})){
+    units = [{name:selectedUnitName}].concat(units);
+  }
+  el.innerHTML = '<option value="">— სტრუქტურული ერთეული —</option>' +
+    units.map(function(u){
+      var sel = (selectedUnitName && u.name === selectedUnitName) ? ' selected' : '';
+      return '<option value="'+u.name.replace(/"/g,'&quot;')+'"'+sel+'>'+u.name+'</option>';
+    }).join('');
+}
+
+/* Cascade: wizard standalone company → unit */
+function onWizCompanyChange(){
+  var el = document.getElementById('wiz-company');
+  populateUserUnitDropdown('wiz-unit', el ? el.value : '', '');
+}
+
+/* Cascade: user detail company → unit */
+function onUdCompanyChange(){
+  var el = document.getElementById('ud-company');
+  populateUserUnitDropdown('ud-unit', el ? el.value : '', '');
+}
+
+/* ── Patch openUserWizard to init company dropdown ── */
+var _origOpenUserWizard = window.openUserWizard;
+window.openUserWizard = function(){
+  _origOpenUserWizard();
+  populateUserCompanyDropdown('wiz-company', '');
+  populateUserUnitDropdown('wiz-unit', '', '');
+};
+
+/* ── Patch openUserDetail to use dropdowns ── */
+var _origOpenUserDetail = window.openUserDetail;
+window.openUserDetail = function(uid){
+  _origOpenUserDetail(uid);
+  // populate company dropdown and set saved value
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===uid;});
+  if(!u) return;
+  populateUserCompanyDropdown('ud-company', u.company);
+  populateUserUnitDropdown('ud-unit', u.company, u.unit);
+};
+
+/* wizCreate and saveUserDetail need no special patches:
+   option values are already the display names, so .value returns the name directly. */
 
 /* ═══════════════════════════════
    უსაფრთხოების პარამეტრები
