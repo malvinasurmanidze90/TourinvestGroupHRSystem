@@ -717,6 +717,35 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
 .scope-picker-item.indent-1{padding-left:28px;}
 .scope-picker-item.indent-2{padding-left:44px;}
 .scope-picker-item .item-icon{font-size:13px;flex-shrink:0;}
+
+/* ══ Position→User Flow ══ */
+.sysaccess-section{background:var(--teal-light);border:1.5px solid var(--teal);border-radius:var(--radius);overflow:hidden;margin-top:14px;}
+.sysaccess-header{background:var(--teal);color:var(--white);padding:9px 14px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.sysaccess-body{padding:14px;}
+.sysaccess-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(79,168,200,.18);}
+.sysaccess-row:last-child{border-bottom:none;}
+.sysaccess-label{font-size:13px;font-weight:600;color:var(--navy);}
+.sysaccess-desc{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+/* Role type badges */
+.role-type-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-left:5px;}
+.role-type-position{background:#dbeafe;color:#1d4ed8;}
+.role-type-additional{background:#dcfce7;color:#15803d;}
+.role-type-temporary{background:var(--amber-light);color:var(--amber);}
+.role-type-override{background:var(--red-light);color:var(--red);}
+/* System access prompt modal */
+.sap-check-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--gray-100);}
+.sap-check-row:last-child{border-bottom:none;}
+.sap-check-row input[type=checkbox]{margin-top:2px;width:15px;height:15px;accent-color:var(--teal);flex-shrink:0;}
+.sap-check-label{font-size:13px;font-weight:600;color:var(--navy);}
+.sap-check-desc{font-size:11.5px;color:var(--text-muted);margin-top:1px;}
+.sap-info-table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+.sap-info-table td{padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--gray-100);}
+.sap-info-table td:first-child{font-weight:700;color:var(--text-muted);width:45%;}
+.sap-info-table tr:last-child td{border-bottom:none;}
+/* Transfer role update */
+.transfer-role-diff{background:var(--amber-light);border:1px solid var(--amber);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:12.5px;}
+/* Manual override indicator */
+.manual-override-tag{display:inline-flex;align-items:center;gap:5px;background:var(--red-light);border:1px solid var(--red);color:var(--red);border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700;}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
 </head>
@@ -1955,6 +1984,31 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
         </div>
       </div>
 
+      <!-- ══ სისტემური წვდომა ══ -->
+      <div class="sysaccess-section">
+        <div class="sysaccess-header"><i class="ti ti-shield-lock"></i> სისტემური წვდომა</div>
+        <div class="sysaccess-body">
+          <div class="field-group" style="margin-bottom:10px;">
+            <label class="field-label">Default System Role</label>
+            <select class="field-input" id="stf-f-default-role">
+              <option value="">— როლი არ არის —</option>
+            </select>
+          </div>
+          <div class="sysaccess-row">
+            <div><div class="sysaccess-label">System User Required</div><div class="sysaccess-desc">ამ პოზიციის მქონე თანამშრომელს სჭირდება სისტემის ანგარიში</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="stf-f-require-user"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="sysaccess-row">
+            <div><div class="sysaccess-label">MFA Required</div><div class="sysaccess-desc">ამ პოზიციაზე MFA სავალდებულოა</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="stf-f-mfa-required"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="sysaccess-row">
+            <div><div class="sysaccess-label">Auto Disable User on Termination</div><div class="sysaccess-desc">გათავისუფლებისას ავტომატურად გაითიშოს User Account</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="stf-f-auto-disable" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
       <!-- Audit -->
       <div id="stf-audit-info" class="su-audit-row" style="display:none;font-size:11px;color:var(--text-muted);">
         <span>შექმნა: <strong id="stf-audit-created">—</strong></span>
@@ -1964,6 +2018,107 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
     <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border);">
       <button class="btn btn-secondary" onclick="stfCloseForm()">გაუქმება</button>
       <button class="btn btn-primary" onclick="stfSubmit()">შენახვა</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: System Access Prompt (Employee → User creation) ══ -->
+<div class="modal-overlay" id="modal-sysaccess-prompt">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header">
+      <div><h2>სისტემური წვდომა</h2><div class="sub" id="sap-sub">თანამშრომელი საჭიროებს სისტემურ ანგარიშს</div></div>
+      <button class="modal-close" onclick="closeModal('modal-sysaccess-prompt')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice" id="sap-position-info" style="margin-bottom:14px;"></div>
+      <table class="sap-info-table">
+        <tr><td>საშტატო ერთეული</td><td id="sap-position-name">—</td></tr>
+        <tr><td>Default Role</td><td id="sap-default-role">—</td></tr>
+        <tr><td>System User Required</td><td id="sap-require-user">—</td></tr>
+        <tr><td>MFA Required</td><td id="sap-mfa-req">—</td></tr>
+        <tr><td>Employee User Account</td><td id="sap-existing-user">—</td></tr>
+      </table>
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">განსახორციელებელი ქმედებები</div>
+      <div id="sap-actions-container"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-sysaccess-prompt')">გამოტოვება</button>
+      <button class="btn btn-primary" onclick="sapExecute()"><i class="ti ti-user-check"></i> განახორციელება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Transfer Role Update ══ -->
+<div class="modal-overlay" id="modal-transfer-role">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">
+      <div><h2>პოზიციის შეცვლა — Role განახლება</h2><div class="sub">Position-Based Role-ის განახლება</div></div>
+      <button class="modal-close" onclick="closeModal('modal-transfer-role')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="transfer-role-diff" id="transfer-role-diff"></div>
+      <div id="transfer-role-options" style="display:grid;gap:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-transfer-role')">გამოტოვება</button>
+      <button class="btn btn-primary" onclick="executeTransferRole()">განახლება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Temporary Role ══ -->
+<div class="modal-overlay" id="modal-temp-role">
+  <div class="modal" style="width:500px;">
+    <div class="modal-header">
+      <div><h2>დროებითი როლის მინიჭება</h2><div class="sub" id="temp-role-sub">თანამშრომელი</div></div>
+      <button class="modal-close" onclick="closeModal('modal-temp-role')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice" style="margin-bottom:14px;">დროებითი როლი ავტომატურად მოიხსნება End Date-ის შემდეგ.</div>
+      <div class="field-group">
+        <label class="field-label">დროებითი როლი <span class="req">*</span></label>
+        <select class="field-input" id="temp-role-select"></select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">მიზეზი</label>
+        <input type="text" class="field-input" id="temp-role-reason" placeholder="მაგ. მოვ. შემსრულებელი, შვებ. ჩანაცვლება...">
+      </div>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label class="field-label">Start Date <span class="req">*</span></label>
+          <input type="date" class="field-input" id="temp-role-start">
+        </div>
+        <div class="field-group">
+          <label class="field-label">End Date <span class="req">*</span></label>
+          <input type="date" class="field-input" id="temp-role-end">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">დამამტკიცებელი (Approved By)</label>
+        <input type="text" class="field-input" id="temp-role-approver" placeholder="სახელი გვარი">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-temp-role')">გაუქმება</button>
+      <button class="btn btn-primary" onclick="saveTempRole()"><i class="ti ti-clock"></i> მინიჭება</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Termination System Access ══ -->
+<div class="modal-overlay" id="modal-termination-access">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header" style="background:var(--red);">
+      <div><h2>გათავისუფლება — სისტემური წვდომა</h2><div class="sub" id="term-access-sub"></div></div>
+      <button class="modal-close" onclick="closeModal('modal-termination-access')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice danger" style="margin-bottom:14px;" id="term-access-info"></div>
+      <div id="term-access-actions" style="display:grid;gap:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-termination-access')">გამოტოვება</button>
+      <button class="btn btn-danger" onclick="executeTerminationAccess()"><i class="ti ti-user-x"></i> განახორციელება</button>
     </div>
   </div>
 </div>
@@ -5584,6 +5739,532 @@ function filterPermTree(){
     }
   });
 }
+
+/* ══════════════════════════════════════════════════════════════
+   POSITION → DEFAULT ROLE → EMPLOYEE → USER  FLOW
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Populate Default Role dropdown in staffing form ── */
+function stfPopulateDefaultRoleDropdown(){
+  var sel = document.getElementById('stf-f-default-role');
+  if(!sel) return;
+  var roles = getSysRoles();
+  sel.innerHTML = '<option value="">— როლი არ არის —</option>' +
+    roles.filter(function(r){return r.status==='active';})
+         .map(function(r){ return '<option value="'+r.id+'">'+r.name+(r.isSystem?' ★':'')+' </option>'; }).join('');
+}
+
+/* ── Patch stfOpenAdd: populate default role + reset system access fields ── */
+var _orig_stfOpenAdd = window.stfOpenAdd;
+window.stfOpenAdd = function(){
+  _orig_stfOpenAdd();
+  stfPopulateDefaultRoleDropdown();
+  var el;
+  el = document.getElementById('stf-f-default-role'); if(el) el.value = '';
+  el = document.getElementById('stf-f-require-user'); if(el) el.checked = false;
+  el = document.getElementById('stf-f-mfa-required'); if(el) el.checked = false;
+  el = document.getElementById('stf-f-auto-disable'); if(el) el.checked = true;
+};
+
+/* ── Patch stfOpenEditById: load system access fields ── */
+var _orig_stfOpenEditById = window.stfOpenEditById;
+window.stfOpenEditById = function(id){
+  _orig_stfOpenEditById(id);
+  stfPopulateDefaultRoleDropdown();
+  var stfAll = JSON.parse(localStorage.getItem('hr_portal_staffing')||'[]');
+  var s = stfAll.find(function(x){return x.id===id;});
+  if(s){
+    var el;
+    el = document.getElementById('stf-f-default-role'); if(el) el.value = s.defaultRoleId||'';
+    el = document.getElementById('stf-f-require-user'); if(el) el.checked = !!s.requireSystemUser;
+    el = document.getElementById('stf-f-mfa-required'); if(el) el.checked = !!s.mfaRequired;
+    el = document.getElementById('stf-f-auto-disable'); if(el) el.checked = s.autoDisableOnTermination!==false;
+  }
+};
+
+/* ── Patch stfSubmit: save system access fields ── */
+var _orig_stfSubmit = window.stfSubmit;
+window.stfSubmit = function(){
+  // Read extra fields before calling original
+  var defaultRoleId = (document.getElementById('stf-f-default-role')||{}).value || null;
+  var requireSystemUser = !!(document.getElementById('stf-f-require-user')||{}).checked;
+  var mfaRequired = !!(document.getElementById('stf-f-mfa-required')||{}).checked;
+  var autoDisableOnTermination = !!(document.getElementById('stf-f-auto-disable')||{}).checked;
+
+  // We patch the stfAll array after original saves it
+  var stfBefore = JSON.parse(localStorage.getItem('hr_portal_staffing')||'[]');
+  _orig_stfSubmit();
+  var stfAfter = JSON.parse(localStorage.getItem('hr_portal_staffing')||'[]');
+
+  // Find the newly saved/updated record (last one or the one that changed)
+  var name = (document.getElementById('stf-f-name')||{}).value||'';
+  // After stfSubmit closes the modal, find by name+org match
+  var updated = stfAfter.find(function(s){
+    return s.name.toLowerCase() === name.toLowerCase() ||
+           !stfBefore.find(function(b){return b.id===s.id;});
+  });
+  if(!updated){
+    // Try to find by last modified (updatedAt most recent)
+    updated = stfAfter.slice().sort(function(a,b){return (b.updatedAt||'').localeCompare(a.updatedAt||'');})[0];
+  }
+  if(updated){
+    updated.defaultRoleId = defaultRoleId;
+    updated.requireSystemUser = requireSystemUser;
+    updated.mfaRequired = mfaRequired;
+    updated.autoDisableOnTermination = autoDisableOnTermination;
+    localStorage.setItem('hr_portal_staffing', JSON.stringify(stfAfter));
+    addAuditEntry('update','staffing','Position',updated.name,'',{defaultRoleId:defaultRoleId,requireSystemUser:requireSystemUser});
+  }
+};
+
+/* ── Helper: find staffing position by name ── */
+function findStfByName(posName, orgName){
+  var stfAll = JSON.parse(localStorage.getItem('hr_portal_staffing')||'[]');
+  if(!posName) return null;
+  var q = posName.toLowerCase();
+  // First try exact match
+  var match = stfAll.find(function(s){ return s.name.toLowerCase() === q; });
+  if(!match){
+    // Fuzzy match
+    match = stfAll.find(function(s){ return s.name.toLowerCase().indexOf(q)!==-1 || q.indexOf(s.name.toLowerCase())!==-1; });
+  }
+  return match || null;
+}
+
+/* ── Helper: find user linked to employee ── */
+function findUserByEmpName(empName){
+  var users = getSysUsers();
+  return users.find(function(u){
+    return (u.fname+' '+u.lname).toLowerCase() === (empName||'').toLowerCase() ||
+           u.linkedEmpId === empName;
+  }) || null;
+}
+
+/* ── Helper: get role name by ID ── */
+function getRoleNameById(rid){
+  if(!rid) return '—';
+  var r = getSysRoles().find(function(x){return x.id===rid;});
+  return r ? r.name : rid;
+}
+
+/* ════════════════════════════════════════
+   PATCH saveNewEmployee → System Access Prompt
+   ════════════════════════════════════════ */
+var _orig_saveNewEmployee = window.saveNewEmployee;
+window.saveNewEmployee = function(){
+  // Capture the employee name before saving (for post-save lookup)
+  var empName = (document.getElementById('ae-name')||{}).value||'';
+  var empPos  = (document.getElementById('ae-position')||{}).value||'';
+  var empCo   = (document.getElementById('ae-company')||{}).value||'';
+
+  _orig_saveNewEmployee();
+
+  // After save: check if position requires system user
+  setTimeout(function(){
+    var stfPos = findStfByName(empPos, empCo);
+    if(stfPos && (stfPos.requireSystemUser || stfPos.defaultRoleId)){
+      var existingUser = findUserByEmpName(empName);
+      openSysAccessPrompt(empName, stfPos, existingUser);
+    }
+  }, 350);
+};
+
+/* ════════════════════════════════════════
+   SYSTEM ACCESS PROMPT
+   ════════════════════════════════════════ */
+var _sapContext = { empName:'', stfPos:null, existingUser:null };
+
+function openSysAccessPrompt(empName, stfPos, existingUser){
+  _sapContext = { empName:empName, stfPos:stfPos, existingUser:existingUser };
+  var roleName = getRoleNameById(stfPos.defaultRoleId);
+
+  document.getElementById('sap-sub').textContent = empName + ' — სისტემური წვდომის კონფიგურაცია';
+  document.getElementById('sap-position-name').textContent = stfPos.name;
+  document.getElementById('sap-default-role').innerHTML = stfPos.defaultRoleId ?
+    '<strong style="color:var(--navy)">'+roleName+'</strong>' : '—';
+  document.getElementById('sap-require-user').textContent = stfPos.requireSystemUser ? 'დიახ ✔' : 'არა';
+  document.getElementById('sap-mfa-req').textContent = stfPos.mfaRequired ? 'სავალდებულო ✔' : 'არა';
+  document.getElementById('sap-existing-user').innerHTML = existingUser ?
+    '<span style="color:var(--green);font-weight:700;">✔ არსებობს (@'+existingUser.username+')</span>' :
+    '<span style="color:var(--amber);font-weight:700;">✖ არ არსებობს</span>';
+
+  var infoEl = document.getElementById('sap-position-info');
+  if(existingUser){
+    infoEl.textContent = '"'+empName+'" — სისტემის მომხმარებელი უკვე არსებობს. შეგიძლიათ Default Role-ის მინიჭება.';
+    infoEl.className = 'notice';
+  } else if(stfPos.requireSystemUser){
+    infoEl.textContent = 'პოზიცია "'+stfPos.name+'" მოითხოვს სისტემის მომხმარებელს. შეიქმნეს ახალი User Account?';
+    infoEl.className = 'notice warn';
+  } else {
+    infoEl.textContent = 'პოზიციას აქვს Default Role. შეგიძლიათ User Account-ის შექმნა.';
+    infoEl.className = 'notice';
+  }
+
+  var actions = document.getElementById('sap-actions-container');
+  if(!existingUser){
+    actions.innerHTML =
+      sapCheckRow('sap-act-create', 'Create User Account',
+        'სახელი: '+empName+' · Default Role: '+roleName, true) +
+      sapCheckRow('sap-act-assign-role', 'Assign Default Role',
+        roleName+' — Position-Based Role', !!stfPos.defaultRoleId) +
+      sapCheckRow('sap-act-send-invite', 'Send Invitation Email',
+        'მომხმარებელი მიიღებს ლინკს', true);
+  } else {
+    actions.innerHTML =
+      sapCheckRow('sap-act-assign-role', 'Assign Default Role (Position-Based)',
+        'ახალი Position-Based Role: '+roleName, !!stfPos.defaultRoleId) +
+      sapCheckRow('sap-act-replace-role', 'Replace Existing Position-Based Role',
+        'ძველი position role შეიცვლება, additional roles უცვლელია', true) +
+      sapCheckRow('sap-act-send-invite', 'Send Notification Email',
+        'Role ცვლილების შეტყობინება', false);
+  }
+  openModal('modal-sysaccess-prompt');
+}
+
+function sapCheckRow(id, label, desc, checked){
+  return '<div class="sap-check-row"><input type="checkbox" id="'+id+'"'+(checked?' checked':'')+'>'+
+    '<div><div class="sap-check-label">'+label+'</div><div class="sap-check-desc">'+desc+'</div></div></div>';
+}
+
+function sapExecute(){
+  var ctx = _sapContext;
+  var users = getSysUsers();
+  var roleName = getRoleNameById(ctx.stfPos ? ctx.stfPos.defaultRoleId : null);
+
+  if(!ctx.existingUser && document.getElementById('sap-act-create') && document.getElementById('sap-act-create').checked){
+    // Create new user
+    var nameParts = ctx.empName.split(' ');
+    var fname = nameParts[0]||ctx.empName;
+    var lname = nameParts.slice(1).join(' ')||'';
+    var username = (fname+'.'+lname).toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9.]/g,'');
+    // Ensure unique username
+    var base = username; var suffix = 1;
+    while(users.find(function(u){return u.username===username;})){ username = base+suffix; suffix++; }
+    var roles = (ctx.stfPos && ctx.stfPos.defaultRoleId) ? [ctx.stfPos.defaultRoleId] : [];
+    var newUser = {
+      id: 'u'+Date.now(),
+      username: username,
+      email: username+'@tourinvest.ge',
+      fname: fname, lname: lname,
+      company: '—', unit: ctx.stfPos ? ctx.stfPos.name : '—',
+      roles: roles,
+      positionBasedRoles: ctx.stfPos && ctx.stfPos.defaultRoleId ? [{roleId:ctx.stfPos.defaultRoleId, positionId:ctx.stfPos.id, assignedAt:new Date().toISOString()}] : [],
+      additionalRoles: [],
+      temporaryRoles: [],
+      manualOverride: false,
+      status: document.getElementById('sap-act-send-invite') && document.getElementById('sap-act-send-invite').checked ? 'pending' : 'active',
+      mfa: ctx.stfPos && ctx.stfPos.mfaRequired ? 'email' : 'disabled',
+      lastLogin: '—',
+      linkedEmpName: ctx.empName
+    };
+    users.push(newUser);
+    saveSysUsers(users);
+    addAuditEntry('create','users','User',username,'',{linkedTo:ctx.empName, positionBased:roleName});
+    addAuditEntry('create','users','UserLinkedToEmployee',ctx.empName,'',{username:username});
+    if(ctx.stfPos && ctx.stfPos.defaultRoleId){
+      addAuditEntry('role_change','roles','PositionBasedRole',username,'',{role:roleName, type:'Position-Based'});
+    }
+    closeModal('modal-sysaccess-prompt');
+    toast('✅', 'User Account შეიქმნა: @'+username+' · Role: '+roleName);
+    renderUsersTable();
+  } else if(ctx.existingUser){
+    // Assign/replace role on existing user
+    var u = users.find(function(x){return x.id===ctx.existingUser.id;});
+    if(u && ctx.stfPos && ctx.stfPos.defaultRoleId){
+      var assignRole = document.getElementById('sap-act-assign-role') && document.getElementById('sap-act-assign-role').checked;
+      if(assignRole){
+        if(!u.positionBasedRoles) u.positionBasedRoles = [];
+        if(!u.additionalRoles) u.additionalRoles = [];
+        var replaceMode = document.getElementById('sap-act-replace-role') && document.getElementById('sap-act-replace-role').checked;
+        if(replaceMode){
+          // Remove old position-based roles from main roles array
+          var oldPosRoles = u.positionBasedRoles.map(function(r){return r.roleId;});
+          u.roles = (u.roles||[]).filter(function(r){ return oldPosRoles.indexOf(r)===-1; });
+          u.positionBasedRoles = [];
+          addAuditEntry('role_change','roles','PositionBasedRole',u.username,{old:oldPosRoles},{new:ctx.stfPos.defaultRoleId});
+        }
+        // Add new position-based role
+        if((u.roles||[]).indexOf(ctx.stfPos.defaultRoleId)===-1) u.roles.push(ctx.stfPos.defaultRoleId);
+        u.positionBasedRoles.push({roleId:ctx.stfPos.defaultRoleId, positionId:ctx.stfPos.id, assignedAt:new Date().toISOString()});
+        saveSysUsers(users);
+        toast('✅', '@'+u.username+' — Role განახლდა: '+roleName);
+        renderUsersTable();
+      }
+    }
+    closeModal('modal-sysaccess-prompt');
+  }
+}
+
+/* ════════════════════════════════════════
+   TRANSFER: Position-Based Role Update
+   ════════════════════════════════════════ */
+var _transferContext = { userId:'', oldRoleId:'', newRoleId:'', newPosId:'' };
+
+function openTransferRoleModal(userId, oldRoleId, newRoleId, newPosId, empName){
+  _transferContext = { userId:userId, oldRoleId:oldRoleId, newRoleId:newRoleId, newPosId:newPosId };
+  var oldName = getRoleNameById(oldRoleId);
+  var newName = getRoleNameById(newRoleId);
+  document.getElementById('transfer-role-diff').innerHTML =
+    'თანამშრომელი: <strong>'+empName+'</strong><br>'+
+    'ძველი Role: <span class="badge badge-user-inactive">'+oldName+'</span> → '+
+    'ახალი Default Role: <span class="badge badge-user-active">'+newName+'</span>';
+  document.getElementById('transfer-role-options').innerHTML =
+    sapCheckRow('tr-replace', 'Replace Position-Based Role', 'ძველი position role → '+newName+'. Additional Roles უცვლელია', true) +
+    sapCheckRow('tr-keep', 'Keep Current Role', 'პოზიცია შეიცვალა, მაგრამ Role ძველი დარჩება', false) +
+    sapCheckRow('tr-add', 'Add New Role as Additional', 'ახალი role ემატება ხელით. ძველი position role რჩება', false);
+  openModal('modal-transfer-role');
+}
+
+function executeTransferRole(){
+  var ctx = _transferContext;
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===ctx.userId;});
+  if(!u){ closeModal('modal-transfer-role'); return; }
+  if(!u.positionBasedRoles) u.positionBasedRoles = [];
+  if(!u.additionalRoles) u.additionalRoles = [];
+
+  if(document.getElementById('tr-replace') && document.getElementById('tr-replace').checked){
+    var oldIds = u.positionBasedRoles.map(function(r){return r.roleId;});
+    u.roles = (u.roles||[]).filter(function(r){ return oldIds.indexOf(r)===-1; });
+    u.positionBasedRoles = [];
+    if(ctx.newRoleId){
+      if((u.roles||[]).indexOf(ctx.newRoleId)===-1) u.roles.push(ctx.newRoleId);
+      u.positionBasedRoles.push({roleId:ctx.newRoleId, positionId:ctx.newPosId, assignedAt:new Date().toISOString()});
+    }
+    addAuditEntry('role_change','roles','PositionBasedRole',u.username,{oldRole:ctx.oldRoleId},{newRole:ctx.newRoleId,type:'Transfer'});
+    toast('✅','Position-Based Role განახლდა → '+getRoleNameById(ctx.newRoleId));
+  } else if(document.getElementById('tr-add') && document.getElementById('tr-add').checked){
+    if(ctx.newRoleId && (u.roles||[]).indexOf(ctx.newRoleId)===-1){
+      u.roles.push(ctx.newRoleId);
+      u.additionalRoles.push({roleId:ctx.newRoleId, assignedAt:new Date().toISOString(), assignedBy:CU?CU.name:'system'});
+    }
+    addAuditEntry('role_change','roles','AdditionalRoleAdded',u.username,'',{role:ctx.newRoleId});
+    toast('✅','ახალი role დაემატა Additional-ად');
+  }
+  saveSysUsers(users);
+  closeModal('modal-transfer-role');
+  renderUsersTable();
+}
+
+/* ════════════════════════════════════════
+   TERMINATION: Disable User Account
+   ════════════════════════════════════════ */
+var _termContext = { empName:'', userId:'' };
+
+function openTerminationAccessModal(empName, stfPos){
+  var existingUser = findUserByEmpName(empName);
+  if(!existingUser && !(stfPos && stfPos.autoDisableOnTermination)) return;
+  _termContext = { empName:empName, userId:existingUser ? existingUser.id : null };
+  document.getElementById('term-access-sub').textContent = empName;
+  document.getElementById('term-access-info').innerHTML =
+    '<strong>'+empName+'</strong> გათავისუფლდა. '+(existingUser?'სისტემის ანგარიში: @'+existingUser.username:'');
+
+  var autoDisable = stfPos && stfPos.autoDisableOnTermination;
+  document.getElementById('term-access-actions').innerHTML = existingUser ? (
+    sapCheckRow('term-disable', 'Disable User Account', '@'+existingUser.username+' — სტატუსი: Inactive', autoDisable||true) +
+    sapCheckRow('term-end-sessions', 'End Active Sessions', 'ყველა აქტიური სესია დასრულდება', true) +
+    sapCheckRow('term-remove-pos-role', 'Remove Position-Based Role', 'Position-Based Role-ი მოიხსნება', true) +
+    sapCheckRow('term-keep-archive', 'Keep Account as Inactive Archive', 'ანგარიში შეინახება, მხოლოდ დაიბლოკება', true)
+  ) : '<div class="notice">სისტემის მომხმარებელი ვერ მოიძებნა.</div>';
+  openModal('modal-termination-access');
+}
+
+function executeTerminationAccess(){
+  var ctx = _termContext;
+  if(!ctx.userId){ closeModal('modal-termination-access'); return; }
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===ctx.userId;});
+  if(!u){ closeModal('modal-termination-access'); return; }
+
+  if(document.getElementById('term-disable') && document.getElementById('term-disable').checked){
+    u.status = 'inactive';
+    addAuditEntry('update','users','UserDisabledOnTermination',u.username,'',{status:'inactive',reason:'Termination'});
+  }
+  if(document.getElementById('term-remove-pos-role') && document.getElementById('term-remove-pos-role').checked){
+    if(u.positionBasedRoles && u.positionBasedRoles.length){
+      var posIds = u.positionBasedRoles.map(function(r){return r.roleId;});
+      u.roles = (u.roles||[]).filter(function(r){ return posIds.indexOf(r)===-1; });
+      u.positionBasedRoles = [];
+      addAuditEntry('role_change','roles','PositionBasedRoleRemoved',u.username,'',{reason:'Termination'});
+    }
+  }
+  saveSysUsers(users);
+  if(document.getElementById('term-end-sessions') && document.getElementById('term-end-sessions').checked){
+    addAuditEntry('session_terminated','users','Session',u.username,'',{reason:'Termination'});
+  }
+  closeModal('modal-termination-access');
+  toast('🔴','@'+u.username+' — ანგარიში გამორთულია');
+  renderUsersTable();
+}
+
+/* ── Patch confTerminate to trigger system access flow ── */
+var _orig_confTerminate = window.confTerminate;
+if(_orig_confTerminate){
+  window.confTerminate = function(id){
+    var emps = getEmps();
+    var e = emps.find(function(x){return x.id===id;});
+    _orig_confTerminate(id);
+    // After confirm button is set up, wrap its onclick to also open termination modal
+    var origOk = document.getElementById('conf-ok').onclick;
+    document.getElementById('conf-ok').onclick = function(){
+      if(origOk) origOk.call(this);
+      if(e){
+        var stfPos = findStfByName(e.pos, e.co);
+        setTimeout(function(){ openTerminationAccessModal(e.name, stfPos); }, 400);
+      }
+    };
+  };
+}
+
+/* ════════════════════════════════════════
+   TEMPORARY ROLE
+   ════════════════════════════════════════ */
+var _tempRoleUserId = null;
+
+function openTempRoleModal(userId){
+  _tempRoleUserId = userId;
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===userId;});
+  if(!u) return;
+  document.getElementById('temp-role-sub').textContent = u.fname+' '+u.lname+' (@'+u.username+')';
+  var roles = getSysRoles();
+  document.getElementById('temp-role-select').innerHTML =
+    '<option value="">— როლის შერჩევა —</option>' +
+    roles.filter(function(r){return r.status==='active';})
+         .map(function(r){return '<option value="'+r.id+'">'+r.name+'</option>';}).join('');
+  document.getElementById('temp-role-reason').value = '';
+  document.getElementById('temp-role-start').value = new Date().toISOString().substring(0,10);
+  document.getElementById('temp-role-end').value = '';
+  document.getElementById('temp-role-approver').value = '';
+  openModal('modal-temp-role');
+}
+
+function saveTempRole(){
+  var roleId = document.getElementById('temp-role-select').value;
+  var reason = document.getElementById('temp-role-reason').value;
+  var start  = document.getElementById('temp-role-start').value;
+  var end    = document.getElementById('temp-role-end').value;
+  var approver = document.getElementById('temp-role-approver').value;
+  if(!roleId||!start||!end){ toast('⚠','სავალდებულო ველები: Role, Start, End Date',true); return; }
+  if(end <= start){ toast('⚠','End Date უნდა იყოს Start Date-ზე გვიან',true); return; }
+
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===_tempRoleUserId;});
+  if(!u){ closeModal('modal-temp-role'); return; }
+  if(!u.temporaryRoles) u.temporaryRoles = [];
+
+  var rec = { roleId:roleId, startDate:start, endDate:end, reason:reason, approvedBy:approver, assignedAt:new Date().toISOString(), active:true };
+  u.temporaryRoles.push(rec);
+  // Also add to main roles array (temporarily)
+  if((u.roles||[]).indexOf(roleId)===-1) u.roles.push(roleId);
+  saveSysUsers(users);
+  addAuditEntry('role_change','roles','TemporaryRoleAssigned',u.username,'',{role:getRoleNameById(roleId), startDate:start, endDate:end, reason:reason});
+  closeModal('modal-temp-role');
+  toast('⏰','დროებითი Role მიენიჭა: '+getRoleNameById(roleId)+' ('+start+' → '+end+')');
+  renderUsersTable();
+}
+
+/* ── Check & expire temporary roles ── */
+function processExpiredTempRoles(){
+  var users = getSysUsers();
+  var today_str = new Date().toISOString().substring(0,10);
+  var changed = false;
+  users.forEach(function(u){
+    if(!u.temporaryRoles || !u.temporaryRoles.length) return;
+    u.temporaryRoles.forEach(function(tr){
+      if(tr.active && tr.endDate && tr.endDate < today_str){
+        tr.active = false;
+        // Remove from main roles if not also position-based or additional
+        var isAlsoOther = (u.positionBasedRoles||[]).some(function(r){return r.roleId===tr.roleId;}) ||
+                          (u.additionalRoles||[]).some(function(r){return r.roleId===tr.roleId;});
+        if(!isAlsoOther){
+          u.roles = (u.roles||[]).filter(function(r){return r!==tr.roleId;});
+        }
+        addAuditEntry('role_change','roles','TemporaryRoleExpired',u.username||'',{},{role:tr.roleId, endDate:tr.endDate});
+        changed = true;
+      }
+    });
+  });
+  if(changed) saveSysUsers(users);
+}
+
+/* ── Manual Override: mark user as manually overridden ── */
+function setManualOverride(userId, override){
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===userId;});
+  if(!u) return;
+  u.manualOverride = override;
+  saveSysUsers(users);
+  addAuditEntry('update','users','ManualOverride',u.username,'',{manualOverride:override});
+  toast(override?'⚠':'✅', (override?'Manual Override ჩართულია':'Manual Override გამორთულია')+' — @'+u.username);
+  renderUsersTable();
+}
+
+/* ── Run temp role expiry check on portal load ── */
+var _origInitPortal2 = window.initPortal;
+window.initPortal = function(){
+  if(_origInitPortal2) _origInitPortal2();
+  setTimeout(processExpiredTempRoles, 500);
+};
+
+/* ── Extend User Detail modal to show role types & temp role button ── */
+var _orig_openUserDetail = window.openUserDetail;
+window.openUserDetail = function(uid){
+  _orig_openUserDetail(uid);
+  // Extend roles tab to show Position-Based vs Additional vs Temporary
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===uid;});
+  if(!u) return;
+  var roles = getSysRoles();
+  var posRoleIds  = (u.positionBasedRoles||[]).map(function(r){return r.roleId;});
+  var addRoleIds  = (u.additionalRoles||[]).map(function(r){return r.roleId;});
+  var tempRoles   = (u.temporaryRoles||[]).filter(function(r){return r.active;});
+
+  var rolesHtml = '<div style="margin-bottom:10px;">';
+  if(u.manualOverride){
+    rolesHtml += '<div class="manual-override-tag"><i class="ti ti-alert-triangle"></i> Manual Override Active</div>';
+    rolesHtml += '<div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;margin-bottom:10px;">Audit Log-ში ეს ნიშანდება. სისტემა ავტომატურად Position-Based Role-ს ვერ გაანახლებს.</div>';
+  }
+  rolesHtml += '</div>';
+
+  rolesHtml += '<div style="margin-bottom:6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Position-Based</div>';
+  rolesHtml += (u.roles||[]).filter(function(rid){ return posRoleIds.indexOf(rid)!==-1; }).map(function(rid){
+    var r = roles.find(function(x){return x.id===rid;})||{name:rid};
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--teal-light);border:1px solid var(--teal);border-radius:var(--radius);margin-bottom:5px;font-size:13px;"><i class="ti ti-briefcase" style="color:var(--teal);"></i><span style="font-weight:600;">'+r.name+'</span><span class="role-type-badge role-type-position">Position-Based</span></div>';
+  }).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">—</div>';
+
+  rolesHtml += '<div style="margin:10px 0 6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Additional</div>';
+  rolesHtml += (u.roles||[]).filter(function(rid){ return addRoleIds.indexOf(rid)!==-1 && posRoleIds.indexOf(rid)===-1; }).map(function(rid){
+    var r = roles.find(function(x){return x.id===rid;})||{name:rid};
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--green-light);border:1px solid var(--green);border-radius:var(--radius);margin-bottom:5px;font-size:13px;"><i class="ti ti-plus-circle" style="color:var(--green);"></i><span style="font-weight:600;">'+r.name+'</span><span class="role-type-badge role-type-additional">Additional</span></div>';
+  }).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">—</div>';
+
+  if(tempRoles.length){
+    rolesHtml += '<div style="margin:10px 0 6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Temporary</div>';
+    rolesHtml += tempRoles.map(function(tr){
+      var r = roles.find(function(x){return x.id===tr.roleId;})||{name:tr.roleId};
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--amber-light);border:1px solid var(--amber);border-radius:var(--radius);margin-bottom:5px;font-size:13px;">'+
+        '<i class="ti ti-clock" style="color:var(--amber);"></i><span style="font-weight:600;">'+r.name+'</span>'+
+        '<span class="role-type-badge role-type-temporary">'+tr.startDate+' → '+tr.endDate+'</span>'+
+        (tr.reason?'<span style="font-size:11px;color:var(--text-muted);margin-left:auto;">'+tr.reason+'</span>':'')+'</div>';
+    }).join('');
+  }
+
+  rolesHtml += '<div style="margin-top:12px;display:flex;gap:8px;">' +
+    '<button class="btn btn-outline btn-sm" onclick="openTempRoleModal(\''+uid+'\')"><i class="ti ti-clock"></i> დროებითი Role</button>' +
+    '<button class="btn btn-outline btn-sm" onclick="setManualOverride(\''+uid+'\','+(u.manualOverride?'false':'true')+')"><i class="ti ti-'+(u.manualOverride?'lock-open':'tool')+'"></i> '+(u.manualOverride?'Override გამორთვა':'Manual Override')+'</button>' +
+    '</div>';
+
+  var rolesContent = document.getElementById('ud-roles-content');
+  if(rolesContent) rolesContent.innerHTML = rolesHtml;
+};
+
+/* ── Leave statuses: do NOT disable user ── */
+var SAFE_STATUSES = ['leave','maternity','sick','business_trip','vacation'];
+
+/* ══════════════════════════════════════════════════════════════
+   END OF POSITION→USER FLOW
+   ══════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════
    Scope Picker — კომპანიები
