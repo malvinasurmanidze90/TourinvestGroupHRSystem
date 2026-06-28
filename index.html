@@ -1861,13 +1861,17 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
       <div id="wiz-step-4" class="wiz-panel">
         <div class="form-section-title" style="border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;background:var(--navy);color:var(--white);font-size:13px;font-weight:700;">Step 4 — Company Scope</div>
         <div id="wiz-co-scope-options" style="display:grid;gap:8px;"></div>
+        <div id="wiz-co-picker" style="display:none;margin-top:12px;border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px;max-height:200px;overflow-y:auto;"></div>
       </div>
       <div id="wiz-step-5" class="wiz-panel">
         <div class="form-section-title" style="border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;background:var(--navy);color:var(--white);font-size:13px;font-weight:700;">Step 5 — Organization Scope</div>
+        <div id="wiz-scope-co-summary" class="notice" style="display:none;margin-bottom:10px;"></div>
         <div id="wiz-org-scope-options" style="display:grid;gap:8px;"></div>
+        <div id="wiz-org-picker" style="display:none;margin-top:12px;border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px;max-height:200px;overflow-y:auto;"></div>
       </div>
       <div id="wiz-step-6" class="wiz-panel">
         <div class="form-section-title" style="border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;background:var(--navy);color:var(--white);font-size:13px;font-weight:700;">Step 6 — Employee Scope</div>
+        <div id="wiz-scope-org-summary" class="notice" style="display:none;margin-bottom:10px;"></div>
         <div id="wiz-emp-scope-options" style="display:grid;gap:8px;"></div>
       </div>
       <div id="wiz-step-7" class="wiz-panel">
@@ -7145,6 +7149,230 @@ if(_origInitPortal_p35){
     p35RunMigration();
   };
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   WIZARD SCOPE CASCADING
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Extend WIZ.data with selected IDs */
+var _origOpenUserWizard_scope = window.openUserWizard;
+window.openUserWizard = function(){
+  _origOpenUserWizard_scope();
+  WIZ.data.selectedCoIds = [];
+  WIZ.data.selectedOrgIds = [];
+};
+
+/* Override wizSetScope to handle pickers + cascading reset */
+window.wizSetScope = function(field, val, el, containerId){
+  WIZ.data[field] = val;
+  var c = document.getElementById(containerId); if(!c) return;
+  c.querySelectorAll('.scope-option').forEach(function(x){ x.classList.remove('selected'); });
+  el.classList.add('selected');
+  el.querySelector('input[type=radio]').checked = true;
+
+  if(field === 'coScope'){
+    var picker = document.getElementById('wiz-co-picker');
+    if(val === 'selected'){
+      wizBuildCoPicker();
+      if(picker) picker.style.display = '';
+    } else {
+      if(picker) picker.style.display = 'none';
+      WIZ.data.selectedCoIds = [];
+    }
+    WIZ.data.orgScope = 'all';
+    WIZ.data.selectedOrgIds = [];
+  }
+  if(field === 'orgScope'){
+    var orgPicker = document.getElementById('wiz-org-picker');
+    if(val === 'selected'){
+      wizBuildOrgPicker();
+      if(orgPicker) orgPicker.style.display = '';
+    } else {
+      if(orgPicker) orgPicker.style.display = 'none';
+      WIZ.data.selectedOrgIds = [];
+    }
+  }
+};
+
+/* Override wizGoTo to rebuild scope steps with cascade context */
+var _origWizGoTo = window.wizGoTo;
+window.wizGoTo = function(step){
+  _origWizGoTo(step);
+  if(step === 5) wizEnterOrgScope();
+  if(step === 6) wizEnterEmpScope();
+};
+
+/* ── Company Scope picker (Step 4) ── */
+function wizBuildCoPicker(){
+  var picker = document.getElementById('wiz-co-picker'); if(!picker) return;
+  var orgs = p35GetOrgs().filter(function(o){return o.status==='active';});
+  if(!orgs.length){
+    picker.innerHTML = '<div style="color:var(--text-muted);font-size:12.5px;padding:8px;">ორგანიზაციები ცარიელია. ჯერ დაამატეთ ორგანიზაციები მოდულში.</div>';
+    return;
+  }
+  picker.innerHTML = orgs.map(function(o){
+    var checked = WIZ.data.selectedCoIds.indexOf(o.id) !== -1;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--gray-200);cursor:pointer;font-size:13px;">'+
+      '<input type="checkbox" data-co-id="'+o.id+'" '+(checked?'checked':'')+' onchange="wizToggleCo(this)"> '+
+      '<div style="font-weight:600;">'+o.name+'</div></label>';
+  }).join('');
+}
+
+function wizToggleCo(cb){
+  var id = cb.getAttribute('data-co-id');
+  if(cb.checked){
+    if(WIZ.data.selectedCoIds.indexOf(id)===-1) WIZ.data.selectedCoIds.push(id);
+  } else {
+    WIZ.data.selectedCoIds = WIZ.data.selectedCoIds.filter(function(x){return x!==id;});
+  }
+  WIZ.data.orgScope = 'all';
+  WIZ.data.selectedOrgIds = [];
+}
+
+/* ── Get companies in scope ── */
+function wizGetScopedCompanyIds(){
+  if(WIZ.data.coScope === 'all') return p35GetOrgs().filter(function(o){return o.status==='active';}).map(function(o){return o.id;});
+  if(WIZ.data.coScope === 'selected') return WIZ.data.selectedCoIds.slice();
+  return [];
+}
+
+/* ── Organization Scope (Step 5) — filtered by Step 4 ── */
+function wizEnterOrgScope(){
+  var coIds = wizGetScopedCompanyIds();
+  var summary = document.getElementById('wiz-scope-co-summary');
+  if(summary){
+    if(WIZ.data.coScope === 'all'){
+      summary.style.display = '';
+      summary.innerHTML = '<i class="ti ti-building"></i> Company Scope: <b>ყველა კომპანია</b>';
+    } else if(WIZ.data.coScope === 'selected' && coIds.length){
+      var names = coIds.map(function(id){ var o=p35OrgById(id); return o?o.name:id; });
+      summary.style.display = '';
+      summary.innerHTML = '<i class="ti ti-building"></i> Company Scope: <b>'+names.join(', ')+'</b>';
+    } else {
+      summary.style.display = '';
+      summary.innerHTML = '<i class="ti ti-building"></i> Company Scope: <b>'+WIZ.data.coScope+'</b>';
+    }
+  }
+  var orgPicker = document.getElementById('wiz-org-picker');
+  if(orgPicker) orgPicker.style.display = WIZ.data.orgScope==='selected' ? '' : 'none';
+}
+
+function wizBuildOrgPicker(){
+  var picker = document.getElementById('wiz-org-picker'); if(!picker) return;
+  var coIds = wizGetScopedCompanyIds();
+  var allUnits = [];
+  coIds.forEach(function(coId){
+    var org = p35OrgById(coId);
+    var orgName = org ? org.name : coId;
+    var units = p35GetSUsForOrg(coId);
+    if(units.length){
+      allUnits.push({isGroup:true, name:orgName});
+      units.forEach(function(u){ allUnits.push({id:u.id, name:u.name, level:u.level}); });
+    }
+  });
+  if(!allUnits.length){
+    picker.innerHTML = '<div style="color:var(--text-muted);font-size:12.5px;padding:8px;">არჩეულ კომპანიებში სტრუქტურული ერთეულები არ არის.</div>';
+    return;
+  }
+  picker.innerHTML = allUnits.map(function(u){
+    if(u.isGroup) return '<div style="font-weight:700;font-size:12px;color:var(--navy-mid);padding:6px 10px;background:var(--gray-100);border-radius:3px;margin-top:4px;">🏢 '+u.name+'</div>';
+    var checked = WIZ.data.selectedOrgIds.indexOf(u.id) !== -1;
+    var indent = ''; for(var i=0;i<(u.level||0);i++) indent += '    ';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:5px 10px 5px '+(14+u.level*18)+'px;cursor:pointer;font-size:13px;">'+
+      '<input type="checkbox" data-org-id="'+u.id+'" '+(checked?'checked':'')+' onchange="wizToggleOrg(this)"> '+indent+u.name+'</label>';
+  }).join('');
+}
+
+function wizToggleOrg(cb){
+  var id = cb.getAttribute('data-org-id');
+  if(cb.checked){
+    if(WIZ.data.selectedOrgIds.indexOf(id)===-1) WIZ.data.selectedOrgIds.push(id);
+  } else {
+    WIZ.data.selectedOrgIds = WIZ.data.selectedOrgIds.filter(function(x){return x!==id;});
+  }
+}
+
+/* ── Employee Scope (Step 6) — summary of cascaded scope ── */
+function wizEnterEmpScope(){
+  var summary = document.getElementById('wiz-scope-org-summary');
+  if(!summary) return;
+  var coIds = wizGetScopedCompanyIds();
+  var coNames = coIds.map(function(id){ var o=p35OrgById(id); return o?o.name:id; });
+  var orgInfo = '';
+  if(WIZ.data.orgScope === 'all') orgInfo = 'ყველა ერთეული';
+  else if(WIZ.data.orgScope === 'selected' && WIZ.data.selectedOrgIds.length){
+    var orgNames = WIZ.data.selectedOrgIds.map(function(id){ var u=p35SUById(id); return u?u.name:id; });
+    orgInfo = orgNames.join(', ');
+  } else orgInfo = WIZ.data.orgScope;
+
+  var emps = getEmps();
+  var filteredCount = wizCountScopedEmployees(emps, coIds);
+
+  summary.style.display = '';
+  summary.innerHTML = '<i class="ti ti-filter"></i> '+
+    '<b>კომპანიები:</b> '+(WIZ.data.coScope==='all'?'ყველა':coNames.join(', '))+' · '+
+    '<b>ერთეულები:</b> '+orgInfo+' · '+
+    '<b>თანამშრომლები:</b> '+filteredCount+' / '+emps.length;
+}
+
+function wizCountScopedEmployees(emps, coIds){
+  var filtered = emps;
+  if(WIZ.data.coScope !== 'all'){
+    filtered = filtered.filter(function(e){
+      return e.companyId && coIds.indexOf(e.companyId) !== -1;
+    });
+  }
+  if(WIZ.data.orgScope === 'selected' && WIZ.data.selectedOrgIds.length){
+    var orgIds = WIZ.data.selectedOrgIds;
+    var allOrgIds = [];
+    orgIds.forEach(function(oid){ collectChildOrgIds(oid, allOrgIds); });
+    filtered = filtered.filter(function(e){
+      return e.orgUnitId && allOrgIds.indexOf(e.orgUnitId) !== -1;
+    });
+  }
+  return filtered.length;
+}
+
+function collectChildOrgIds(parentId, result){
+  if(result.indexOf(parentId)===-1) result.push(parentId);
+  p35GetSUs().filter(function(u){return u.parentType==='su' && u.parentId===parentId;}).forEach(function(u){
+    collectChildOrgIds(u.id, result);
+  });
+}
+
+/* ── Patch wizBuildReview to show scope detail ── */
+var _origWizBuildReview = window.wizBuildReview;
+window.wizBuildReview = function(){
+  _origWizBuildReview();
+  var c = document.getElementById('wiz-review-content'); if(!c) return;
+  var coIds = wizGetScopedCompanyIds();
+  var coNames = coIds.map(function(id){ var o=p35OrgById(id); return o?o.name:id; });
+  var coText = WIZ.data.coScope==='all' ? 'ყველა კომპანია' : (WIZ.data.coScope==='selected' ? coNames.join(', ') : WIZ.data.coScope);
+  var orgText = WIZ.data.orgScope==='all' ? 'ყველა ერთეული' : (WIZ.data.orgScope==='selected' ? WIZ.data.selectedOrgIds.map(function(id){var u=p35SUById(id);return u?u.name:id;}).join(', ') : WIZ.data.orgScope);
+  var table = c.querySelector('table');
+  if(table){
+    var rows = table.querySelectorAll('tr');
+    rows.forEach(function(row){
+      var td0 = row.querySelector('td:first-child');
+      if(td0 && td0.textContent==='Company Scope') row.querySelector('td:last-child').textContent = coText;
+      if(td0 && td0.textContent==='Organization Scope') row.querySelector('td:last-child').textContent = orgText;
+    });
+  }
+};
+
+/* ── Patch wizCreate to save selectedCoIds/selectedOrgIds ── */
+var _origWizCreate_scope = window.wizCreate;
+window.wizCreate = function(){
+  var usersBefore = getSysUsers().length;
+  _origWizCreate_scope();
+  var usersAfter = getSysUsers();
+  if(usersAfter.length > usersBefore){
+    var u = usersAfter[usersAfter.length - 1];
+    u.selectedCoIds = WIZ.data.selectedCoIds ? WIZ.data.selectedCoIds.slice() : [];
+    u.selectedOrgIds = WIZ.data.selectedOrgIds ? WIZ.data.selectedOrgIds.slice() : [];
+    saveSysUsers(usersAfter);
+  }
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    END OF PHASE 3.5
