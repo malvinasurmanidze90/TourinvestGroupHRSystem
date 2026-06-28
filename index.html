@@ -3977,14 +3977,14 @@ document.getElementById('su-modal-delete').addEventListener('click',function(e){
           <div class="form-grid-2">
             <div class="field-group"><label class="field-label">სახელი, გვარი <span class="req">*</span></label><input class="field-input" id="ae-name" placeholder="მარიამ გელაშვილი"></div>
             <div class="field-group"><label class="field-label">კომპანია <span class="req">*</span></label>
-              <select class="field-input" id="ae-company"><option value="">— —</option>
-                <option>TourInvest Group (Holding)</option><option>Riverside Boutique Hotel</option>
-                <option>Mountain View Resort</option><option>Georgia Taste Restaurant</option>
-                <option>TourInvest Travel</option><option>TI Entertainment</option><option>TI Technical Services</option>
-              </select>
+              <select class="field-input" id="ae-company" onchange="aeOnCompanyChange()"><option value="">— კომპანია —</option></select>
             </div>
-            <div class="field-group"><label class="field-label">პოზიცია <span class="req">*</span></label><input class="field-input" id="ae-position"></div>
-            <div class="field-group"><label class="field-label">განყოფილება <span class="req">*</span></label><input class="field-input" id="ae-dept"></div>
+            <div class="field-group"><label class="field-label">სტრუქტურული ერთეული <span class="req">*</span></label>
+              <select class="field-input" id="ae-dept" onchange="aeOnUnitChange()"><option value="">— ჯერ კომპანია აირჩიეთ —</option></select>
+            </div>
+            <div class="field-group"><label class="field-label">საშტატო ერთეული / პოზიცია <span class="req">*</span></label>
+              <select class="field-input" id="ae-position"><option value="">— ჯერ ერთეული აირჩიეთ —</option></select>
+            </div>
             <div class="field-group"><label class="field-label">სამუშაოს დაწყება <span class="req">*</span></label><input class="field-input" type="date" id="ae-startdate"></div>
             <div class="field-group"><label class="field-label">გამოსაცდელი ვადა</label>
               <select class="field-input" id="ae-duration"><option value="6">6 თვე (სტანდარტული)</option><option value="3">3 თვე</option></select>
@@ -6781,6 +6781,346 @@ function saveSysSettings(){
   addAuditEntry('update','settings','SystemSettings','','',s);
   toast('✅','სისტემური პარამეტრები შეინახა');
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PHASE 3.5 — DATA INTEGRITY & RELATIONSHIP FIX
+   Single Source of Truth: Organization Module → Company/SU/Position
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Helpers: read from org module (single source of truth) ── */
+function p35GetOrgs(){return JSON.parse(localStorage.getItem('hr_portal_organizations')||'[]');}
+function p35GetSUs(){return JSON.parse(localStorage.getItem('hr_portal_structural_units')||'[]');}
+function p35GetStf(){return JSON.parse(localStorage.getItem('hr_portal_staffing')||'[]');}
+function p35OrgById(id){return p35GetOrgs().find(function(o){return o.id===id;})||null;}
+function p35SUById(id){return p35GetSUs().find(function(u){return u.id===id;})||null;}
+function p35StfById(id){return p35GetStf().find(function(s){return s.id===id;})||null;}
+
+/* ── Override getAllCompanies: org module only ── */
+window.getAllCompanies = function(){
+  return p35GetOrgs()
+    .filter(function(o){return o.status==='active';})
+    .map(function(o){return {id:o.id, name:o.name};});
+};
+
+/* ── Override getAllStructuralUnits: org module only ── */
+window.getAllStructuralUnits = function(){
+  var sus = p35GetSUs();
+  var orgs = p35GetOrgs();
+  var result = [];
+  orgs.forEach(function(org){
+    if(org.status!=='active') return;
+    result.push({id:'grp_'+org.id, name:org.name, isGroup:true});
+    sus.filter(function(u){return u.status==='active';}).forEach(function(u){
+      var parentOrg = null;
+      if(u.parentType==='org' && u.parentId===org.id) parentOrg = org.name;
+      else if(u.parentType==='su'){
+        var chain = u; var depth = 0;
+        while(chain && chain.parentType==='su' && depth<10){
+          chain = sus.find(function(x){return x.id===chain.parentId;});
+          depth++;
+        }
+        if(chain && chain.parentType==='org' && chain.parentId===org.id) parentOrg = org.name;
+      }
+      if(parentOrg) result.push({id:u.id, name:u.name, isGroup:false, parent:parentOrg});
+    });
+  });
+  return result;
+};
+
+/* ── Get all SUs under a specific org ID (flat, with level) ── */
+function p35GetSUsForOrg(orgId){
+  var sus = p35GetSUs().filter(function(u){return u.status==='active';});
+  var result = [];
+  function collect(parentId, parentType, level){
+    sus.filter(function(u){return u.parentType===parentType && u.parentId===parentId;})
+      .sort(function(a,b){return (a.sortOrder||0)-(b.sortOrder||0);})
+      .forEach(function(u){
+        result.push({id:u.id, name:u.name, level:level});
+        collect(u.id, 'su', level+1);
+      });
+  }
+  collect(orgId, 'org', 0);
+  return result;
+}
+
+/* ── Get staffing positions for a unit ── */
+function p35GetStfForUnit(unitId){
+  return p35GetStf().filter(function(s){return s.unitId===unitId && s.status==='active';});
+}
+
+/* ═══════════════════════════════════════
+   Employee Form — Cascading Dropdowns
+   ═══════════════════════════════════════ */
+
+function aePopulateCompanies(selectedId){
+  var el = document.getElementById('ae-company'); if(!el) return;
+  var orgs = p35GetOrgs().filter(function(o){return o.status==='active';});
+  el.innerHTML = '<option value="">— კომპანია —</option>' +
+    orgs.map(function(o){
+      var sel = (selectedId && o.id===selectedId) ? ' selected' : '';
+      return '<option value="'+o.id+'" data-name="'+o.name.replace(/"/g,'&quot;')+'"'+sel+'>'+o.name+'</option>';
+    }).join('');
+}
+
+function aeOnCompanyChange(){
+  var companyId = document.getElementById('ae-company').value;
+  var deptEl = document.getElementById('ae-dept');
+  var posEl = document.getElementById('ae-position');
+  if(posEl) posEl.innerHTML = '<option value="">— ჯერ ერთეული აირჩიეთ —</option>';
+  if(!companyId){
+    if(deptEl) deptEl.innerHTML = '<option value="">— ჯერ კომპანია აირჩიეთ —</option>';
+    return;
+  }
+  var units = p35GetSUsForOrg(companyId);
+  if(deptEl){
+    deptEl.innerHTML = '<option value="">— სტრუქტურული ერთეული —</option>' +
+      units.map(function(u){
+        var indent = ''; for(var i=0;i<u.level;i++) indent += '    ';
+        return '<option value="'+u.id+'" data-name="'+u.name.replace(/"/g,'&quot;')+'">'+indent+u.name+'</option>';
+      }).join('');
+  }
+}
+
+function aeOnUnitChange(){
+  var unitId = document.getElementById('ae-dept').value;
+  var posEl = document.getElementById('ae-position');
+  if(!unitId || !posEl){
+    if(posEl) posEl.innerHTML = '<option value="">— ჯერ ერთეული აირჩიეთ —</option>';
+    return;
+  }
+  var positions = p35GetStfForUnit(unitId);
+  posEl.innerHTML = '<option value="">— საშტატო ერთეული —</option>' +
+    positions.map(function(p){
+      return '<option value="'+p.id+'" data-name="'+p.name.replace(/"/g,'&quot;')+'">'+p.name+'</option>';
+    }).join('');
+}
+
+/* ── Patch openAddEmployee ── */
+var _origOpenAddEmployee_p35 = window.openAddEmployee;
+window.openAddEmployee = function(){
+  _origOpenAddEmployee_p35();
+  aePopulateCompanies('');
+  var deptEl = document.getElementById('ae-dept');
+  if(deptEl) deptEl.innerHTML = '<option value="">— ჯერ კომპანია აირჩიეთ —</option>';
+  var posEl = document.getElementById('ae-position');
+  if(posEl) posEl.innerHTML = '<option value="">— ჯერ ერთეული აირჩიეთ —</option>';
+};
+
+/* ── Patch saveNewEmployee: inject FK fields + fix text display ── */
+var _origSaveNewEmployee_p35 = window.saveNewEmployee;
+window.saveNewEmployee = function(){
+  var companyEl = document.getElementById('ae-company');
+  var deptEl = document.getElementById('ae-dept');
+  var posEl = document.getElementById('ae-position');
+
+  var fk_companyId = companyEl ? companyEl.value : '';
+  var fk_orgUnitId = deptEl ? deptEl.value : '';
+  var fk_stfPositionId = posEl ? posEl.value : '';
+
+  var companyName = (companyEl && companyEl.selectedIndex>0) ? companyEl.options[companyEl.selectedIndex].getAttribute('data-name')||companyEl.options[companyEl.selectedIndex].text : '';
+  var unitName = (deptEl && deptEl.selectedIndex>0) ? deptEl.options[deptEl.selectedIndex].getAttribute('data-name')||deptEl.options[deptEl.selectedIndex].text.trim() : '';
+  var posName = (posEl && posEl.selectedIndex>0) ? posEl.options[posEl.selectedIndex].getAttribute('data-name')||posEl.options[posEl.selectedIndex].text.trim() : '';
+
+  var empsBefore = getEmps().length;
+  _origSaveNewEmployee_p35();
+  var empsAfter = getEmps();
+
+  if(empsAfter.length > empsBefore){
+    var emp = empsAfter[empsAfter.length - 1];
+    emp.companyId = fk_companyId || null;
+    emp.orgUnitId = fk_orgUnitId || null;
+    emp.stfPositionId = fk_stfPositionId || null;
+    if(companyName) emp.co = companyName;
+    if(unitName) emp.dept = unitName;
+    if(posName) emp.pos = posName;
+    saveEmps(empsAfter);
+  }
+};
+
+/* ═══════════════════════════════════════
+   User ↔ Employee — Bidirectional Link
+   ═══════════════════════════════════════ */
+
+/* Patch wizCreate: when user linked to employee, set Employee.linkedUserId */
+var _origWizCreate_p35 = window.wizCreate;
+window.wizCreate = function(){
+  var empsBefore = getSysUsers().length;
+  _origWizCreate_p35();
+  var usersAfter = getSysUsers();
+
+  if(usersAfter.length > empsBefore){
+    var newUser = usersAfter[usersAfter.length - 1];
+    if(newUser.linkedEmpId){
+      var emps = getEmps();
+      var emp = emps.find(function(e){return e.id===newUser.linkedEmpId;});
+      if(emp){
+        emp.linkedUserId = newUser.id;
+        if(emp.companyId) newUser.company = p35OrgById(emp.companyId) ? p35OrgById(emp.companyId).name : emp.co;
+        if(emp.orgUnitId) newUser.unit = p35SUById(emp.orgUnitId) ? p35SUById(emp.orgUnitId).name : emp.dept;
+        saveEmps(emps);
+        saveSysUsers(usersAfter);
+      }
+    }
+    if(!newUser.linkedEmpId && newUser.company){
+      var org = p35GetOrgs().find(function(o){return o.name===newUser.company;});
+      if(org) newUser.companyId = org.id;
+      saveSysUsers(usersAfter);
+    }
+  }
+};
+
+/* Patch sapExecute (system access prompt — creates user from employee):
+   set bidirectional link + inherit FK data */
+var _origSapExecute = window.sapExecute;
+if(_origSapExecute){
+  window.sapExecute = function(){
+    var usersBefore = getSysUsers().length;
+    _origSapExecute();
+    var usersAfter = getSysUsers();
+    if(usersAfter.length > usersBefore){
+      var newUser = usersAfter[usersAfter.length - 1];
+      if(newUser.linkedEmpId){
+        var emps = getEmps();
+        var emp = emps.find(function(e){return e.id===newUser.linkedEmpId;});
+        if(emp){
+          emp.linkedUserId = newUser.id;
+          saveEmps(emps);
+        }
+      }
+    }
+  };
+}
+
+/* ═══════════════════════════════════════
+   User Detail — Company/Unit from Org Module
+   ═══════════════════════════════════════ */
+
+/* Override populateUserCompanyDropdown: org module only */
+window.populateUserCompanyDropdown = function(selectId, selectedName){
+  var el = document.getElementById(selectId); if(!el) return;
+  var orgs = p35GetOrgs().filter(function(o){return o.status==='active';});
+  if(selectedName && !orgs.find(function(o){return o.name===selectedName;})){
+    orgs = [{id:'_legacy', name:selectedName, status:'active'}].concat(orgs);
+  }
+  el.innerHTML = '<option value="">— კომპანია —</option>' +
+    orgs.map(function(o){
+      var sel = (selectedName && o.name===selectedName) ? ' selected' : '';
+      return '<option value="'+o.name.replace(/"/g,'&quot;')+'"'+sel+'>'+o.name+'</option>';
+    }).join('');
+};
+
+/* Override populateUserUnitDropdown: org module only */
+window.populateUserUnitDropdown = function(selectId, companyName, selectedUnitName){
+  var el = document.getElementById(selectId); if(!el) return;
+  if(!companyName){
+    el.innerHTML = '<option value="">— ჯერ კომპანია აირჩიეთ —</option>';
+    return;
+  }
+  var org = p35GetOrgs().find(function(o){return o.name===companyName;});
+  var units = [];
+  if(org) units = p35GetSUsForOrg(org.id);
+  if(selectedUnitName && !units.find(function(u){return u.name===selectedUnitName;})){
+    units = [{id:'_legacy', name:selectedUnitName, level:0}].concat(units);
+  }
+  el.innerHTML = '<option value="">— სტრუქტურული ერთეული —</option>' +
+    units.map(function(u){
+      var sel = (selectedUnitName && u.name===selectedUnitName) ? ' selected' : '';
+      var indent = ''; for(var i=0;i<(u.level||0);i++) indent += '    ';
+      return '<option value="'+u.name.replace(/"/g,'&quot;')+'"'+sel+'>'+indent+u.name+'</option>';
+    }).join('');
+};
+
+/* ═══════════════════════════════════════
+   Manager Relationship Fix
+   Employee.managerId → Employee.id
+   ═══════════════════════════════════════ */
+
+/* Resolve Employee manager from mgrId (User ID) to managerId (Employee ID) */
+function p35ResolveManager(mgrUserId, emps, users){
+  if(!mgrUserId) return null;
+  var usr = users.find(function(u){return u.id===mgrUserId;});
+  if(!usr || !usr.linkedEmpId) return null;
+  var mgrEmp = emps.find(function(e){return e.id===usr.linkedEmpId;});
+  return mgrEmp ? mgrEmp.id : null;
+}
+
+/* ═══════════════════════════════════════
+   Data Migration — Safe Mapping
+   ═══════════════════════════════════════ */
+
+function p35RunMigration(){
+  var emps = getEmps();
+  var users = getSysUsers();
+  var orgs = p35GetOrgs();
+  var sus = p35GetSUs();
+  var stf = p35GetStf();
+  var report = {mapped:{company:0,unit:0,position:0,manager:0,userLink:0}, unresolved:{company:[],unit:[],position:[],manager:[]}};
+  var changed = false;
+
+  emps.forEach(function(emp){
+    /* Company mapping: Employee.co → Organization.name → companyId */
+    if(!emp.companyId && emp.co){
+      var org = orgs.find(function(o){return o.name===emp.co && o.status==='active';});
+      if(org){ emp.companyId = org.id; report.mapped.company++; changed=true; }
+      else { if(report.unresolved.company.indexOf(emp.co)===-1) report.unresolved.company.push(emp.co); }
+    }
+
+    /* Structural Unit mapping: Employee.dept → SU.name (under same company) → orgUnitId */
+    if(!emp.orgUnitId && emp.dept && emp.companyId){
+      var matchSU = sus.find(function(u){
+        if(u.name!==emp.dept || u.status!=='active') return false;
+        var chain = u; var depth = 0;
+        while(chain && depth<10){
+          if(chain.parentType==='org' && chain.parentId===emp.companyId) return true;
+          if(chain.parentType==='su') chain = sus.find(function(x){return x.id===chain.parentId;});
+          else break;
+          depth++;
+        }
+        return false;
+      });
+      if(matchSU){ emp.orgUnitId = matchSU.id; report.mapped.unit++; changed=true; }
+      else { if(report.unresolved.unit.indexOf(emp.dept)===-1) report.unresolved.unit.push(emp.dept); }
+    }
+
+    /* Position mapping: Employee.pos → StaffingPosition.name (under same unit) → stfPositionId */
+    if(!emp.stfPositionId && emp.pos && emp.orgUnitId){
+      var matchPos = stf.find(function(s){return s.name===emp.pos && s.unitId===emp.orgUnitId && s.status==='active';});
+      if(matchPos){ emp.stfPositionId = matchPos.id; report.mapped.position++; changed=true; }
+      else { if(report.unresolved.position.indexOf(emp.pos)===-1) report.unresolved.position.push(emp.pos); }
+    }
+
+    /* Manager mapping: Employee.mgrId (User ID) → managerId (Employee ID) */
+    if(!emp.managerId && emp.mgrId){
+      var mgrEmpId = p35ResolveManager(emp.mgrId, emps, users);
+      if(mgrEmpId){ emp.managerId = mgrEmpId; report.mapped.manager++; changed=true; }
+      else { if(report.unresolved.manager.indexOf(emp.mgrId)===-1) report.unresolved.manager.push(emp.mgrId); }
+    }
+
+    /* User ↔ Employee bidirectional link */
+    if(!emp.linkedUserId){
+      var linkedUser = users.find(function(u){return u.linkedEmpId===emp.id;});
+      if(linkedUser){ emp.linkedUserId = linkedUser.id; report.mapped.userLink++; changed=true; }
+    }
+  });
+
+  if(changed) saveEmps(emps);
+
+  console.log('[Phase 3.5] Migration report:', JSON.stringify(report, null, 2));
+  return report;
+}
+
+/* ── Run migration on portal init ── */
+var _origInitPortal_p35 = window.initPortal;
+if(_origInitPortal_p35){
+  window.initPortal = function(){
+    _origInitPortal_p35();
+    p35RunMigration();
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   END OF PHASE 3.5
+   ══════════════════════════════════════════════════════════════════════ */
 </script>
 </body>
 </html>
