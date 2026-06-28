@@ -746,6 +746,21 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
 .transfer-role-diff{background:var(--amber-light);border:1px solid var(--amber);border-radius:var(--radius);padding:12px;margin-bottom:14px;font-size:12.5px;}
 /* Manual override indicator */
 .manual-override-tag{display:inline-flex;align-items:center;gap:5px;background:var(--red-light);border:1px solid var(--red);color:var(--red);border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700;}
+/* Password strength */
+.pwd-strength-bar{display:flex;gap:3px;height:5px;border-radius:3px;overflow:hidden;}
+.pwd-strength-bar .seg{flex:1;background:var(--gray-200);border-radius:2px;transition:background .2s;}
+.pwd-strength-bar.s1 .seg:nth-child(1){background:#ef4444;}
+.pwd-strength-bar.s2 .seg:nth-child(-n+2){background:#f59e0b;}
+.pwd-strength-bar.s3 .seg:nth-child(-n+3){background:#22c55e;}
+.pwd-strength-bar.s4 .seg{background:#059669;}
+.pwd-str-label{font-size:11px;font-weight:700;margin-top:3px;}
+.pwd-str-label.s1{color:#ef4444;}.pwd-str-label.s2{color:#f59e0b;}.pwd-str-label.s3{color:#22c55e;}.pwd-str-label.s4{color:#059669;}
+.pwd-check{display:inline-flex;align-items:center;gap:4px;margin-right:12px;}
+.pwd-check.pass{color:#22c55e;}.pwd-check.fail{color:var(--text-muted);}
+.pwd-check i{font-size:13px;}
+/* Force-change modal */
+.force-pwd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.force-pwd-box{background:var(--white);border-radius:var(--radius-lg);padding:32px;width:420px;max-width:95vw;box-shadow:var(--shadow-lg);}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
 </head>
@@ -1784,13 +1799,26 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
         <div class="form-section-title" style="border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;background:var(--navy);color:var(--white);font-size:13px;font-weight:700;">Step 1 — ანგარიში</div>
         <div class="form-grid-2">
           <div class="field-group"><label class="field-label">Username <span class="req">*</span></label><input type="text" class="field-input" id="wiz-username" placeholder="maia.beridze"></div>
-          <div class="field-group"><label class="field-label">ელ.ფოსტა <span class="req">*</span></label><input type="email" class="field-input" id="wiz-email" placeholder="maia@company.ge"></div>
-          <div class="field-group"><label class="field-label">პაროლი <span class="req">*</span></label><input type="password" class="field-input" id="wiz-password" placeholder="მინ. 8 სიმბოლო"></div>
-          <div class="field-group"><label class="field-label">პაროლის დადასტურება <span class="req">*</span></label><input type="password" class="field-input" id="wiz-confirm-pwd" placeholder="განმეორეთ პაროლი"></div>
+          <div class="field-group"><label class="field-label">სამუშაო ელ.ფოსტა <span class="req">*</span></label><input type="email" class="field-input" id="wiz-email" placeholder="maia@company.ge"></div>
+          <div class="field-group"><label class="field-label">მობილური</label><input type="tel" class="field-input" id="wiz-phone" placeholder="+995 5XX XXX XXX"></div>
+          <div class="field-group" style="position:relative;">
+            <label class="field-label">დროებითი პაროლი <span class="req">*</span></label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" class="field-input" id="wiz-password" readonly style="font-family:monospace;letter-spacing:1px;flex:1;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="wizGeneratePassword()" style="white-space:nowrap;"><i class="ti ti-refresh"></i> ახალი</button>
+            </div>
+            <div id="wiz-pwd-strength" style="margin-top:6px;"></div>
+            <div id="wiz-pwd-checks" style="margin-top:4px;font-size:11.5px;line-height:1.7;"></div>
+          </div>
+          <input type="hidden" id="wiz-confirm-pwd">
         </div>
         <div class="toggle-row" style="margin-top:8px;">
-          <div><div class="toggle-label">მოწვევის ელ.ფოსტის გაგზავნა</div><div class="toggle-desc">მომხმარებელი მიიღებს ლინკს ანგარიშის გასააქტიურებლად</div></div>
+          <div><div class="toggle-label">მოწვევის გაგზავნა</div><div class="toggle-desc">მომხმარებელი მიიღებს Username-ს და დროებით პაროლს ელ.ფოსტაზე / SMS-ით</div></div>
           <label class="toggle-switch"><input type="checkbox" id="wiz-send-invite" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row" style="margin-top:4px;">
+          <div><div class="toggle-label">პირველ შესვლაზე პაროლის შეცვლა</div><div class="toggle-desc">მომხმარებელი ვალდებულია შეცვალოს დროებითი პაროლი</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="wiz-force-change" checked><span class="toggle-slider"></span></label>
         </div>
       </div>
       <div id="wiz-step-2" class="wiz-panel">
@@ -7120,6 +7148,301 @@ if(_origInitPortal_p35){
 
 /* ══════════════════════════════════════════════════════════════════════
    END OF PHASE 3.5
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+   SECURE USER CREATION & PASSWORD POLICY
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Read password policy from Security Settings ── */
+function getPwdPolicy(){
+  var s = getSecSettings();
+  return {
+    minLen:    parseInt(s.pwdMinLen) || parseInt((document.getElementById('sec-pwd-minlen')||{}).value) || 12,
+    upper:     s.pwdUpper !== undefined ? !!s.pwdUpper : true,
+    lower:     s.pwdLower !== undefined ? !!s.pwdLower : true,
+    digit:     s.pwdNum   !== undefined ? !!s.pwdNum   : true,
+    special:   s.pwdSpecial !== undefined ? !!s.pwdSpecial : true,
+    expiry:    parseInt(s.pwdExpiry) || 90,
+    history:   parseInt(s.pwdHistory) || 5,
+    forceFirst:s.pwdFirstChange !== undefined ? !!s.pwdFirstChange : true
+  };
+}
+
+/* ── Password generator ── */
+function generateSecurePassword(){
+  var pol = getPwdPolicy();
+  var len = Math.max(pol.minLen, 12);
+  var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  var lower = 'abcdefghjkmnpqrstuvwxyz';
+  var digits = '23456789';
+  var specials = '@#$%&!?*+';
+  var all = '';
+  var pwd = '';
+  if(pol.upper){ pwd += upper[Math.floor(Math.random()*upper.length)]; all += upper; }
+  if(pol.lower){ pwd += lower[Math.floor(Math.random()*lower.length)]; all += lower; }
+  if(pol.digit){ pwd += digits[Math.floor(Math.random()*digits.length)]; all += digits; }
+  if(pol.special){ pwd += specials[Math.floor(Math.random()*specials.length)]; all += specials; }
+  if(!all) all = upper + lower + digits;
+  while(pwd.length < len) pwd += all[Math.floor(Math.random()*all.length)];
+  pwd = pwd.split('').sort(function(){return Math.random()-0.5;}).join('');
+  return pwd;
+}
+
+/* ── Password validation ── */
+function validatePassword(pwd, username, fname, lname){
+  var pol = getPwdPolicy();
+  var checks = {
+    minLen:  pwd.length >= pol.minLen,
+    upper:   !pol.upper  || /[A-Z]/.test(pwd),
+    lower:   !pol.lower  || /[a-z]/.test(pwd),
+    digit:   !pol.digit  || /[0-9]/.test(pwd),
+    special: !pol.special || /[^A-Za-z0-9]/.test(pwd),
+    notUser: !username || pwd.toLowerCase().indexOf(username.toLowerCase()) === -1,
+    notName: (!fname || pwd.toLowerCase().indexOf(fname.toLowerCase()) === -1) &&
+             (!lname || pwd.toLowerCase().indexOf(lname.toLowerCase()) === -1)
+  };
+  checks.valid = Object.keys(checks).every(function(k){return checks[k];});
+  return checks;
+}
+
+/* ── Strength score (0-4) ── */
+function passwordStrength(pwd){
+  var score = 0;
+  if(pwd.length >= 8) score++;
+  if(pwd.length >= 12) score++;
+  if(/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+  if(/[0-9]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd)) score++;
+  return Math.min(score, 4);
+}
+
+/* ── Render strength bar + checks in wizard ── */
+function wizRenderPwdStrength(){
+  var pwd = (document.getElementById('wiz-password')||{}).value || '';
+  var pol = getPwdPolicy();
+  var bar = document.getElementById('wiz-pwd-strength');
+  var chk = document.getElementById('wiz-pwd-checks');
+  if(!bar || !chk) return;
+  if(!pwd){ bar.innerHTML=''; chk.innerHTML=''; return; }
+  var s = passwordStrength(pwd);
+  var labels = ['','სუსტი','საშუალო','ძლიერი','ძალიან ძლიერი'];
+  bar.innerHTML = '<div class="pwd-strength-bar s'+s+'"><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div></div>'+
+    '<div class="pwd-str-label s'+s+'">'+labels[s]+'</div>';
+  var v = validatePassword(pwd, '', '', '');
+  var items = [];
+  items.push({ok:v.minLen, t:'მინ. '+pol.minLen+' სიმბოლო'});
+  if(pol.upper)  items.push({ok:v.upper, t:'დიდი ასო'});
+  if(pol.lower)  items.push({ok:v.lower, t:'პატარა ასო'});
+  if(pol.digit)  items.push({ok:v.digit, t:'ციფრი'});
+  if(pol.special) items.push({ok:v.special, t:'სპეციალური სიმბოლო'});
+  chk.innerHTML = items.map(function(i){
+    return '<span class="pwd-check '+(i.ok?'pass':'fail')+'"><i class="ti ti-'+(i.ok?'check':'x')+'"></i> '+i.t+'</span>';
+  }).join('');
+}
+
+/* ── Generate password in wizard ── */
+function wizGeneratePassword(){
+  var pwd = generateSecurePassword();
+  var el = document.getElementById('wiz-password');
+  var confirm = document.getElementById('wiz-confirm-pwd');
+  if(el) el.value = pwd;
+  if(confirm) confirm.value = pwd;
+  wizRenderPwdStrength();
+}
+
+/* ── Patch openUserWizard to auto-generate password ── */
+var _origOpenUserWizard_pwd = window.openUserWizard;
+window.openUserWizard = function(){
+  _origOpenUserWizard_pwd();
+  wizGeneratePassword();
+  var fcEl = document.getElementById('wiz-force-change');
+  if(fcEl) fcEl.checked = getPwdPolicy().forceFirst;
+};
+
+/* ── Patch wizValidateStep to check policy ── */
+var _origWizValidateStep = window.wizValidateStep;
+window.wizValidateStep = function(){
+  if(WIZ && WIZ.step === 1){
+    var un = (document.getElementById('wiz-username')||{}).value || '';
+    var em = (document.getElementById('wiz-email')||{}).value || '';
+    var pw = (document.getElementById('wiz-password')||{}).value || '';
+    if(!un || !em){ toast('⚠','Username და ელ.ფოსტა სავალდებულოა',true); return false; }
+    var v = validatePassword(pw, un, '', '');
+    if(!v.valid){ toast('⚠','პაროლი არ აკმაყოფილებს უსაფრთხოების პოლიტიკას',true); return false; }
+    return true;
+  }
+  return _origWizValidateStep();
+};
+
+/* ── Patch wizCreate to store hashed password + forceChange flag ── */
+var _origWizCreate_pwd = window.wizCreate;
+window.wizCreate = function(){
+  var usersBefore = getSysUsers().length;
+  _origWizCreate_pwd();
+  var usersAfter = getSysUsers();
+  if(usersAfter.length > usersBefore){
+    var u = usersAfter[usersAfter.length - 1];
+    var rawPwd = (document.getElementById('wiz-password')||{}).value || '';
+    u.passwordHash = simpleHash(rawPwd);
+    u.forcePasswordChange = !!(document.getElementById('wiz-force-change')||{}).checked;
+    u.passwordHistory = [simpleHash(rawPwd)];
+    u.passwordSetAt = new Date().toISOString().slice(0,10);
+    u.phone = (document.getElementById('wiz-phone')||{}).value || '';
+    delete u.password;
+    saveSysUsers(usersAfter);
+    if((document.getElementById('wiz-send-invite')||{}).checked){
+      wizShowInvitation(u, rawPwd);
+    }
+  }
+};
+
+/* ── Simple hash (SHA-256 not available synchronously, use deterministic hash) ── */
+function simpleHash(str){
+  var hash = 0;
+  for(var i = 0; i < str.length; i++){
+    var c = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c;
+    hash |= 0;
+  }
+  return 'h$'+Math.abs(hash).toString(36)+'$'+str.length;
+}
+
+/* ── Invitation preview modal ── */
+function wizShowInvitation(user, tempPwd){
+  var methods = [];
+  if(user.email) methods.push('ელ.ფოსტა: '+user.email);
+  if(user.phone) methods.push('SMS: '+user.phone);
+  var body = '<div style="background:var(--gray-100);border-radius:var(--radius);padding:16px;font-size:13px;line-height:1.8;font-family:monospace;">'+
+    '<div style="font-weight:700;margin-bottom:8px;">მოგესალმებით,</div>'+
+    '<div>თქვენთვის შეიქმნა TourInvest HR სისტემაში მომხმარებელი.</div><br>'+
+    '<div><b>Username:</b> '+user.username+'</div>'+
+    '<div><b>დროებითი პაროლი:</b> '+tempPwd+'</div><br>'+
+    (user.forcePasswordChange ? '<div style="color:var(--red);font-weight:700;">შესვლის შემდეგ პაროლის შეცვლა სავალდებულოა.</div><br>' : '')+
+    '<div><b>Login:</b> HR Portal</div>'+
+    '</div>'+
+    '<div style="margin-top:12px;font-size:12px;color:var(--text-muted);">გაგზავნის მეთოდი: '+(methods.join(' + ') || '—')+'</div>';
+  var existing = document.getElementById('modal-invitation-preview');
+  if(!existing){
+    var div = document.createElement('div');
+    div.id = 'modal-invitation-preview';
+    div.className = 'modal-overlay';
+    div.innerHTML = '<div class="modal" style="width:520px;">'+
+      '<div class="modal-header"><div><h2><i class="ti ti-mail"></i> მოწვევის შეტყობინება</h2><div class="sub">გაგზავნილია მომხმარებლისთვის</div></div>'+
+      '<button class="modal-close" onclick="closeModal(\'modal-invitation-preview\')">✕</button></div>'+
+      '<div class="modal-body" id="invitation-body"></div>'+
+      '<div class="modal-footer"><button class="btn btn-primary" onclick="closeModal(\'modal-invitation-preview\')">დახურვა</button></div></div>';
+    document.body.appendChild(div);
+  }
+  document.getElementById('invitation-body').innerHTML = body;
+  openModal('modal-invitation-preview');
+}
+
+/* ── Force Password Change on Login ── */
+function checkForcePasswordChange(user){
+  if(!user || !user.forcePasswordChange) return false;
+  showForceChangeModal(user);
+  return true;
+}
+
+function showForceChangeModal(user){
+  var existing = document.getElementById('force-pwd-overlay');
+  if(existing) existing.remove();
+  var pol = getPwdPolicy();
+  var div = document.createElement('div');
+  div.id = 'force-pwd-overlay';
+  div.className = 'force-pwd-overlay';
+  div.innerHTML = '<div class="force-pwd-box">'+
+    '<h2 style="margin:0 0 4px;font-size:18px;"><i class="ti ti-lock"></i> პაროლის შეცვლა სავალდებულოა</h2>'+
+    '<div class="sub" style="margin-bottom:16px;">პირველი შესვლისას უნდა შეცვალოთ დროებითი პაროლი.</div>'+
+    '<div class="field-group" style="margin-bottom:10px;"><label class="field-label">მიმდინარე დროებითი პაროლი</label><input type="password" class="field-input" id="fc-current-pwd"></div>'+
+    '<div class="field-group" style="margin-bottom:10px;"><label class="field-label">ახალი პაროლი</label><input type="password" class="field-input" id="fc-new-pwd" oninput="fcRenderStrength()"></div>'+
+    '<div id="fc-pwd-strength" style="margin-bottom:6px;"></div>'+
+    '<div id="fc-pwd-checks" style="margin-bottom:10px;font-size:11.5px;line-height:1.7;"></div>'+
+    '<div class="field-group" style="margin-bottom:16px;"><label class="field-label">ახალი პაროლის დადასტურება</label><input type="password" class="field-input" id="fc-confirm-pwd"></div>'+
+    '<button class="btn btn-primary" id="fc-submit-btn" onclick="fcSubmit()" disabled style="width:100%;"><i class="ti ti-check"></i> პაროლის შეცვლა</button>'+
+    '</div>';
+  document.body.appendChild(div);
+}
+
+function fcRenderStrength(){
+  var pwd = (document.getElementById('fc-new-pwd')||{}).value || '';
+  var pol = getPwdPolicy();
+  var bar = document.getElementById('fc-pwd-strength');
+  var chk = document.getElementById('fc-pwd-checks');
+  var btn = document.getElementById('fc-submit-btn');
+  if(!bar||!chk) return;
+  if(!pwd){ bar.innerHTML=''; chk.innerHTML=''; if(btn) btn.disabled=true; return; }
+  var s = passwordStrength(pwd);
+  var labels = ['','სუსტი','საშუალო','ძლიერი','ძალიან ძლიერი'];
+  bar.innerHTML = '<div class="pwd-strength-bar s'+s+'"><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div></div>'+
+    '<div class="pwd-str-label s'+s+'">'+labels[s]+'</div>';
+  var v = validatePassword(pwd, '', '', '');
+  var items = [];
+  items.push({ok:v.minLen, t:'მინ. '+pol.minLen+' სიმბოლო'});
+  if(pol.upper)  items.push({ok:v.upper, t:'დიდი ასო'});
+  if(pol.lower)  items.push({ok:v.lower, t:'პატარა ასო'});
+  if(pol.digit)  items.push({ok:v.digit, t:'ციფრი'});
+  if(pol.special) items.push({ok:v.special, t:'სპეციალური სიმბოლო'});
+  chk.innerHTML = items.map(function(i){
+    return '<span class="pwd-check '+(i.ok?'pass':'fail')+'"><i class="ti ti-'+(i.ok?'check':'x')+'"></i> '+i.t+'</span>';
+  }).join('');
+  if(btn) btn.disabled = !v.valid;
+}
+
+function fcSubmit(){
+  var current = (document.getElementById('fc-current-pwd')||{}).value || '';
+  var newPwd = (document.getElementById('fc-new-pwd')||{}).value || '';
+  var confirm = (document.getElementById('fc-confirm-pwd')||{}).value || '';
+  if(newPwd !== confirm){ toast('⚠','პაროლები არ ემთხვევა',true); return; }
+  var v = validatePassword(newPwd, '', '', '');
+  if(!v.valid){ toast('⚠','პაროლი არ აკმაყოფილებს პოლიტიკას',true); return; }
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.forcePasswordChange;});
+  if(!u){ return; }
+  if(simpleHash(current) !== u.passwordHash){ toast('⚠','მიმდინარე პაროლი არასწორია',true); return; }
+  var hist = u.passwordHistory || [];
+  var newHash = simpleHash(newPwd);
+  var pol = getPwdPolicy();
+  if(hist.slice(0, pol.history).indexOf(newHash) !== -1){ toast('⚠','ეს პაროლი უკვე გამოყენებული იყო. აირჩიეთ ახალი.',true); return; }
+  u.passwordHash = newHash;
+  u.passwordHistory = [newHash].concat(hist).slice(0, pol.history);
+  u.forcePasswordChange = false;
+  u.passwordSetAt = new Date().toISOString().slice(0,10);
+  saveSysUsers(users);
+  var overlay = document.getElementById('force-pwd-overlay');
+  if(overlay) overlay.remove();
+  addAuditEntry('update','users','Password','','','Password changed (first login)');
+  toast('✅','პაროლი წარმატებით შეიცვალა');
+}
+
+/* ── Admin actions: Reset Password, Resend Invitation ── */
+function adminResetPassword(userId){
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===userId;});
+  if(!u) return;
+  var newPwd = generateSecurePassword();
+  var oldHash = u.passwordHash;
+  u.passwordHash = simpleHash(newPwd);
+  u.forcePasswordChange = true;
+  u.passwordSetAt = new Date().toISOString().slice(0,10);
+  var hist = u.passwordHistory || [];
+  u.passwordHistory = [u.passwordHash].concat(hist).slice(0, getPwdPolicy().history);
+  saveSysUsers(users);
+  addAuditEntry('update','users','Password Reset',u.username,'','New temporary password generated');
+  wizShowInvitation(u, newPwd);
+  toast('🔑','ახალი დროებითი პაროლი გენერირებულია — '+u.username);
+}
+
+function adminResendInvitation(userId){
+  var users = getSysUsers();
+  var u = users.find(function(x){return x.id===userId;});
+  if(!u) return;
+  addAuditEntry('update','users','Invitation Resent',u.username,'','');
+  toast('📧','მოწვევა ხელახლა გაიგზავნა — '+u.username);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   END OF SECURE USER CREATION & PASSWORD POLICY
    ══════════════════════════════════════════════════════════════════════ */
 </script>
 </body>
