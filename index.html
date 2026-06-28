@@ -1799,8 +1799,8 @@ table.data-table td { padding: 9px 12px; font-size: 12.5px; }
         <div class="form-section-title" style="border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;background:var(--navy);color:var(--white);font-size:13px;font-weight:700;">Step 1 — ანგარიში</div>
         <div class="form-grid-2">
           <div class="field-group"><label class="field-label">Username <span class="req">*</span></label><input type="text" class="field-input" id="wiz-username" placeholder="maia.beridze"></div>
-          <div class="field-group"><label class="field-label">სამუშაო ელ.ფოსტა <span class="req">*</span></label><input type="email" class="field-input" id="wiz-email" placeholder="maia@company.ge"></div>
-          <div class="field-group"><label class="field-label">მობილური</label><input type="tel" class="field-input" id="wiz-phone" placeholder="+995 5XX XXX XXX"></div>
+          <div class="field-group"><label class="field-label">სამუშაო ელ.ფოსტა <span class="req" title="ელ.ფოსტა ან მობილური სავალდებულოა">⁑</span></label><input type="email" class="field-input" id="wiz-email" placeholder="maia@company.ge"></div>
+          <div class="field-group"><label class="field-label">მობილური <span class="req" title="ელ.ფოსტა ან მობილური სავალდებულოა">⁑</span></label><input type="tel" class="field-input" id="wiz-phone" placeholder="+995 5XX XXX XXX"></div>
           <div class="field-group" style="position:relative;">
             <label class="field-label">დროებითი პაროლი <span class="req">*</span></label>
             <div style="display:flex;gap:6px;">
@@ -7487,14 +7487,22 @@ window.openUserWizard = function(){
   if(fcEl) fcEl.checked = getPwdPolicy().forceFirst;
 };
 
-/* ── Patch wizValidateStep to check policy ── */
+/* ── Patch wizValidateStep to check policy + contact validation ── */
 var _origWizValidateStep = window.wizValidateStep;
 window.wizValidateStep = function(){
   if(WIZ && WIZ.step === 1){
-    var un = (document.getElementById('wiz-username')||{}).value || '';
-    var em = (document.getElementById('wiz-email')||{}).value || '';
+    var un = (document.getElementById('wiz-username')||{}).value.trim();
+    var em = (document.getElementById('wiz-email')||{}).value.trim();
+    var ph = (document.getElementById('wiz-phone')||{}).value.trim();
     var pw = (document.getElementById('wiz-password')||{}).value || '';
-    if(!un || !em){ toast('⚠','Username და ელ.ფოსტა სავალდებულოა',true); return false; }
+    if(!un){ toast('⚠','Username სავალდებულოა',true); return false; }
+    if(!em && !ph){ toast('⚠','გთხოვთ მიუთითოთ ელ.ფოსტა ან მობილურის ნომერი',true); return false; }
+    if(em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ toast('⚠','გთხოვთ მიუთითოთ სწორი ელ.ფოსტის მისამართი',true); return false; }
+    if(ph && !/^\+?\d[\d\s\-]{6,}$/.test(ph)){ toast('⚠','გთხოვთ მიუთითოთ სწორი მობილურის ნომერი',true); return false; }
+    var users = getSysUsers().filter(function(u){return u.status!=='inactive';});
+    if(users.find(function(u){return u.username===un;})){ toast('⚠','ეს Username უკვე გამოიყენება',true); return false; }
+    if(em && users.find(function(u){return u.email===em;})){ toast('⚠','ეს ელ.ფოსტა უკვე რეგისტრირებულია',true); return false; }
+    if(ph && users.find(function(u){return u.phone===ph;})){ toast('⚠','ეს მობილური უკვე რეგისტრირებულია',true); return false; }
     var v = validatePassword(pw, un, '', '');
     if(!v.valid){ toast('⚠','პაროლი არ აკმაყოფილებს უსაფრთხოების პოლიტიკას',true); return false; }
     return true;
